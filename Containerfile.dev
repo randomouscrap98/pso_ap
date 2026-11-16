@@ -1,0 +1,20 @@
+# Dev image: toolchain + phosg/resource_dasm only. Source is mounted, not copied,
+# so builds are incremental. Use ./build_dev.sh.
+FROM ubuntu:24.04
+
+ARG PHOSG_TARGET=master
+ARG RESOURCE_DASM_TARGET=master
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 git ca-certificates make cmake g++ libasio-dev zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN git clone --depth 1 -b ${PHOSG_TARGET} https://github.com/fuzziqersoftware/phosg.git /tmp/phosg && \
+    cmake -S /tmp/phosg -B /tmp/phosg/build -DCMAKE_BUILD_TYPE=Release && \
+    cmake --build /tmp/phosg/build -j$(nproc) && cmake --install /tmp/phosg/build && \
+    git clone --depth 1 -b ${RESOURCE_DASM_TARGET} https://github.com/fuzziqersoftware/resource_dasm.git /tmp/rd && \
+    cmake -S /tmp/rd -B /tmp/rd/build -DCMAKE_BUILD_TYPE=Release && \
+    cmake --build /tmp/rd/build -j$(nproc) && cmake --install /tmp/rd/build && \
+    rm -rf /tmp/phosg /tmp/rd
+
+WORKDIR /src
