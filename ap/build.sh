@@ -48,13 +48,14 @@ clone() { # name url ref
   [ -d "$DEPS_SRC/$1" ] || git clone --depth 1 -b "$3" "$2" "$DEPS_SRC/$1"
 }
 
-# Uses DEP_PREFIX (install prefix), DEP_BUILD (build subdir name), DEP_CMAKE (extra cmake args).
+# Uses DEP_PREFIX (install prefix), DEP_BUILD (build subdir name), DEP_CMAKE (extra cmake args),
+# DEP_CXXFLAGS (extra compiler flags).
 build_dep() { # name url ref [extra cmake args...]
   name="$1"; clone "$1" "$2" "$3"; shift 3
   # shellcheck disable=SC2086
   cmake -S "$DEPS_SRC/$name" -B "$DEPS_SRC/$name/$DEP_BUILD" -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX="$DEP_PREFIX" -DCMAKE_PREFIX_PATH="$DEP_PREFIX" \
-    -DCMAKE_CXX_FLAGS="-include $FIX" $DEP_CMAKE "$@"
+    -DCMAKE_CXX_FLAGS="-include $FIX $DEP_CXXFLAGS" $DEP_CMAKE "$@"
   cmake --build "$DEPS_SRC/$name/$DEP_BUILD" -j"$J"
   cmake --install "$DEPS_SRC/$name/$DEP_BUILD"
 }
@@ -68,7 +69,7 @@ build_fuzziq_deps() {
 }
 
 build_deps() {
-  FIX="$(musl_fix "$DEPS_SRC")"; DEP_PREFIX="$PREFIX"; DEP_BUILD=build; DEP_CMAKE=
+  FIX="$(musl_fix "$DEPS_SRC")"; DEP_PREFIX="$PREFIX"; DEP_BUILD=build; DEP_CMAKE=; DEP_CXXFLAGS=
   build_fuzziq_deps
 }
 
@@ -76,6 +77,8 @@ build_deps() {
 # then phosg/resource_dasm. All static, into WIN_PREFIX.
 build_win_deps() {
   FIX="$(musl_fix "$DEPS_SRC")"; DEP_PREFIX="$WIN_PREFIX"; DEP_BUILD=build-win; DEP_CMAKE="$WIN_CMAKE"
+  # resource_dasm's Windows-only unreserve_mem() ignores its size param (upstream -Werror).
+  DEP_CXXFLAGS="-Wno-unused-parameter"
   mkdir -p "$WIN_PREFIX/include" "$WIN_PREFIX/lib"
   if [ ! -f "$WIN_PREFIX/lib/libz.a" ]; then
     clone zlib https://github.com/madler/zlib.git "${ZLIB_REF:-v1.3.1}"
@@ -115,6 +118,8 @@ build_win_newserv() {
     -DWINDOWS_ENV="$WIN_PREFIX" $WIN_CMAKE \
     -DCMAKE_CXX_FLAGS="-include $FIX -Wno-mismatched-new-delete -Wno-free-nonheap-object"
   cmake --build "$WIN_BUILD_DIR" -j"$J"
+  # Release builds ship: strip (RelWithDebInfo keeps debug info, ~480MB vs ~13MB, for debugging).
+  [ "$BUILD_TYPE" != Release ] || "$WIN_HOST-strip" "$WIN_BUILD_DIR/newserv.exe"
 }
 
 case "$STEP" in
