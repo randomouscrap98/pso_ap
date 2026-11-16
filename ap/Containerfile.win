@@ -1,15 +1,19 @@
 # Windows cross-build image: mingw-w64 toolchain + all Windows deps (in /opt/newserv-win). Source is
 # mounted, not copied, so builds are incremental. Use ap/build_win.sh (build context is the repo root).
+# Also has native musl deps (in /usr/local) for the static Linux release build (ap/build.sh linux-newserv).
 FROM alpine:3.24
 
 ARG PHOSG_TARGET=master
 ARG RESOURCE_DASM_TARGET=master
 
-RUN apk add --no-cache build-base cmake git curl python3 mingw-w64-gcc
+RUN apk add --no-cache build-base cmake git curl python3 mingw-w64-gcc asio-dev zlib-dev linux-headers
 
 COPY ap/build.sh ap/mingw-toolchain.cmake /tmp/ap/
 RUN WIN_PREFIX=/opt/newserv-win DEPS_SRC=/tmp/deps-src J=8 \
     PHOSG_REF=${PHOSG_TARGET} RESOURCE_DASM_REF=${RESOURCE_DASM_TARGET} \
-    /tmp/ap/build.sh win-deps && rm -rf /tmp/deps-src /tmp/ap
+    /tmp/ap/build.sh win-deps && \
+    PREFIX=/usr/local DEPS_SRC=/tmp/deps-src J=8 \
+    PHOSG_REF=${PHOSG_TARGET} RESOURCE_DASM_REF=${RESOURCE_DASM_TARGET} \
+    /tmp/ap/build.sh deps && rm -rf /tmp/deps-src /tmp/ap
 
 WORKDIR /src

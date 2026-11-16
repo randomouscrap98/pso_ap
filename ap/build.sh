@@ -2,14 +2,16 @@
 # Single build script for newserv and its deps (phosg, resource_dasm). Used by
 # ap/Containerfile.dev (deps), ap/build_dev.sh (newserv), and Claude's Alpine sandbox.
 #
-# Usage: ap/build.sh [deps|newserv|all|win-deps|win-newserv|win]
-#   default: all. "all"/"win" skip deps if already installed. win-*: 64-bit Windows cross build (mingw-w64).
+# Usage: ap/build.sh [deps|newserv|all|win-deps|win-newserv|win|linux-newserv|linux]
+#   default: all. "all"/"win"/"linux" skip deps if already installed. win-*: 64-bit Windows cross build (mingw-w64).
+#   linux-*: fully static Linux newserv for releases (needs musl, e.g. Alpine; uses the native deps in PREFIX).
 # Env (relative paths are relative to the repo root):
 #   PREFIX      deps install prefix            (default /usr/local)
 #   WIN_PREFIX  Windows deps prefix            (default /opt/newserv-win; newserv's WINDOWS_ENV)
 #   WIN_BUILD_DIR  Windows newserv build dir   (default build/windows)
 #   DEPS_SRC    where deps are cloned/built    (default /tmp/newserv-deps-src)
 #   BUILD_DIR   newserv build dir              (default build/dev)
+#   LINUX_BUILD_DIR  static Linux newserv build dir  (default build/linux)
 #   BUILD_TYPE  newserv CMake build type       (default RelWithDebInfo)
 #   J           parallel jobs                  (default 8)
 #   PHOSG_REF, RESOURCE_DASM_REF   git branches/tags to clone (default master)
@@ -23,11 +25,13 @@ BUILD_DIR="${BUILD_DIR:-build/dev}"
 BUILD_TYPE="${BUILD_TYPE:-RelWithDebInfo}"
 WIN_PREFIX="${WIN_PREFIX:-/opt/newserv-win}"
 WIN_BUILD_DIR="${WIN_BUILD_DIR:-build/windows}"
+LINUX_BUILD_DIR="${LINUX_BUILD_DIR:-build/linux}"
 J="${J:-8}"
 # Absolutize paths (CMake would resolve some relative ones against the build dir).
 abs() { case "$1" in /*) echo "$1" ;; *) echo "$PWD/$1" ;; esac; }
 PREFIX="$(abs "$PREFIX")"; DEPS_SRC="$(abs "$DEPS_SRC")"; BUILD_DIR="$(abs "$BUILD_DIR")"
 WIN_PREFIX="$(abs "$WIN_PREFIX")"; WIN_BUILD_DIR="$(abs "$WIN_BUILD_DIR")"
+LINUX_BUILD_DIR="$(abs "$LINUX_BUILD_DIR")"
 WIN_HOST=x86_64-w64-mingw32
 WIN_CMAKE="-DCMAKE_TOOLCHAIN_FILE=$PWD/ap/mingw-toolchain.cmake -DCMAKE_FIND_ROOT_PATH=$WIN_PREFIX"
 
@@ -122,6 +126,22 @@ build_win_newserv() {
   [ "$BUILD_TYPE" != Release ] || "$WIN_HOST-strip" "$WIN_BUILD_DIR/newserv.exe"
 }
 
+# Static Linux build: musl links fully static cleanly (glibc doesn't: iconv/NSS). phosg/resource_dasm
+# export a plain "z", so a static libz.a in PREFIX/lib (built here if missing) is all -static needs.
+build_linux_newserv() {
+  if [ ! -f "$PREFIX/lib/libz.a" ]; then
+    clone zlib https://github.com/madler/zlib.git "${ZLIB_REF:-v1.3.1}"
+    rm -rf "$DEPS_SRC/zlib-linux" && cp -r "$DEPS_SRC/zlib" "$DEPS_SRC/zlib-linux"
+    (cd "$DEPS_SRC/zlib-linux" && ./configure --static --prefix="$PREFIX" && make -j"$J" libz.a && make install)
+  fi
+  FIX="$(musl_fix "$LINUX_BUILD_DIR")"
+  cmake -S . -B "$LINUX_BUILD_DIR" -DCMAKE_BUILD_TYPE="$BUILD_TYPE" -DCMAKE_PREFIX_PATH="$PREFIX" \
+    -DCMAKE_EXE_LINKER_FLAGS="-static" \
+    -DCMAKE_CXX_FLAGS="-include $FIX -Wno-mismatched-new-delete -Wno-free-nonheap-object"
+  cmake --build "$LINUX_BUILD_DIR" -j"$J"
+  [ "$BUILD_TYPE" != Release ] || strip "$LINUX_BUILD_DIR/newserv"
+}
+
 case "$STEP" in
   deps) build_deps ;;
   newserv) build_newserv ;;
@@ -129,5 +149,7 @@ case "$STEP" in
   win-deps) build_win_deps ;;
   win-newserv) build_win_newserv ;;
   win) deps_installed "$WIN_PREFIX" || build_win_deps; build_win_newserv ;;
-  *) echo "usage: $0 [deps|newserv|all|win-deps|win-newserv|win]" >&2; exit 1 ;;
+  linux-newserv) build_linux_newserv ;;
+  linux) deps_installed "$PREFIX" || build_deps; build_linux_newserv ;;
+  *) echo "usage: $0 [deps|newserv|all|win-deps|win-newserv|win|linux-newserv|linux]" >&2; exit 1 ;;
 esac
