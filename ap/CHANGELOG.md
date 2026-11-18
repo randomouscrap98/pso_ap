@@ -5,6 +5,8 @@ notes and moves it under the new version.
 
 ## Unreleased
 
+## 0.0.1-pre.1 (2026-11-18)
+
 Early test build: the apworld generates and the client runs the server, but checks and items are placeholders
 (nothing to play for yet).
 
