@@ -2,14 +2,17 @@
 see ignore/claude/research/aplite-compat.md. No kvui import outside make_gui, logging only, block until exit."""
 import asyncio
 import logging
+import re
 
 import Utils
 from CommonClient import ClientCommandProcessor, CommonContext, get_base_parser, handle_url_arg, server_loop
 from MultiServer import mark_raw
 
 from ..items import GAME
+from ..world import PSOBBWorld
 from . import newserv, server_install
 from .forwarder import Forwarder
+from .server_process import ServerProcess, server_log
 
 logger = logging.getLogger("PSOBB")
 
@@ -54,8 +57,11 @@ class PSOBBContext(CommonContext):
         self.loop = asyncio.get_running_loop()
         self.forwarder = Forwarder()
         self.installing = False
+        self.newserv_process = ServerProcess()
+        self.slot_data: dict | None = None  # set on Connected; the server needs the seed
 
     async def shutdown(self) -> None:
+        await self.newserv_process.stop()
         await self.forwarder.stop()
         await super().shutdown()
 
@@ -68,7 +74,8 @@ class PSOBBContext(CommonContext):
     def on_package(self, cmd: str, args: dict) -> None:
         if cmd == "Connected":
             logger.info("Connected to slot %s", self.auth)
-            self.settings_task = asyncio.create_task(self.apply_server_settings(args.get("slot_data", {})))
+            self.slot_data = args.get("slot_data", {})
+            self.start_server_task = asyncio.create_task(self.start_server())
         elif cmd == "ReceivedItems":
             logger.info("Received %d item(s) (total %d)", len(args["items"]), len(self.items_received))
 
@@ -81,8 +88,26 @@ class PSOBBContext(CommonContext):
             logger.info("Installed server at %s", await asyncio.to_thread(server_install.install, path))
         except server_install.InstallError as e:
             logger.error("Server install failed: %s", e)
+            return
         finally:
             self.installing = False
+        if self.slot_data is not None:
+            await self.start_server()
+
+    def save_dir(self) -> str:
+        """Per-seed saves: each seed starts with fresh characters."""
+        name = re.sub(r"[^\w-]", "_", f"{self.server_seed_name}_T{self.team}_P{self.slot}")
+        return Utils.user_path("psobb", "saves", name)
+
+    async def start_server(self) -> None:
+        """Make sure newserv runs for this seed, then push the slot's settings to it."""
+        if not server_install.is_installed():
+            logger.info(server_install.status_message())
+            return
+        settings = PSOBBWorld.settings
+        config = settings.newserv_config or None
+        if await self.newserv_process.ensure_running(self.save_dir(), bool(settings.expose_server), config):
+            await self.apply_server_settings(self.slot_data)
 
     async def apply_server_settings(self, slot_data: dict) -> None:
         try:
@@ -92,11 +117,17 @@ class PSOBBContext(CommonContext):
             logger.warning("Couldn't apply settings to newserv (reconnect to retry): %s", e)
 
     def make_gui(self):
-        from kvui import GameManager  # only reached when the GUI is enabled
+        from kvui import GameManager, UILog  # only reached when the GUI is enabled
 
         class PSOBBManager(GameManager):
             base_title = "PSOBB Client"
             logging_pairs = [("Client", "Archipelago"), ("PSOBB", "PSOBB")]
+
+            def build(self):
+                container = super().build()
+                # Not in logging_pairs: those also feed the All tab (Kivy's default tab); server output is noisy
+                self.add_client_tab("Server", UILog(server_log))
+                return container
 
         return PSOBBManager
 

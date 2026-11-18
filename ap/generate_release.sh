@@ -6,7 +6,7 @@
 #   release/psobb-ap.yml                               (Lutris installer for the game client)
 # newserv is built in its own dirs (release/windows, release/linux; Release = stripped), never build/. system/ only
 # gets git-tracked files (no players/, teams/, caches or a local config.json) plus a config.json generated from
-# config.example.json for local play (127.0.0.1, DNS off).
+# config.example.json for local play (127.0.0.1, DNS off, HTTP API on 127.0.0.1:11500 = client/newserv.py NEWSERV_URL).
 # Usage: generate_release.sh [suffix]   e.g. "rc1" -> PSOBB-AP-newserv-0.0.1-rc1-windows.zip. The apworld's
 # world_version stays x.y.z; the full version, download URLs and hashes go in its server_release.py stamp, so the
 # client downloads exactly these server files. Upload them to the GitHub release tagged v<version>.

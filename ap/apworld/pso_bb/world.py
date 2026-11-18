@@ -1,11 +1,12 @@
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, ClassVar
 
 from BaseClasses import ItemClassification, Tutorial
 from Options import OptionGroup
 from worlds.AutoWorld import WebWorld, World
 
 from . import items, locations, options, regions
+from .host_settings import PSOBBSettings
 from .options import PSOBBOptions
 
 
@@ -29,6 +30,8 @@ class PSOBBWorld(World):
     web = PSOBBWebWorld()
     options_dataclass = PSOBBOptions
     options: PSOBBOptions
+    settings: ClassVar[PSOBBSettings]
+    settings_key = "pso_bb_options"  # the default derives from the module path (pso_bb.world_options)
     location_name_to_id = locations.LOCATION_NAME_TO_ID
     item_name_to_id = items.ITEM_NAME_TO_ID
     origin_region_name = regions.ORIGIN

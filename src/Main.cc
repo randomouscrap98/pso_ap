@@ -4545,6 +4545,7 @@ Action a_run_server_replay_log(
       if (args.get<bool>("debug")) {
         data_index->is_debug = true;
       }
+      data_index->default_bind_address = args.get<std::string>("bind-address");
       data_index->load_all(args.get<bool>("disable-fast-load") ? 1 : 0);
       auto state = ServerState::create_shared(data_index, !replay_log_filenames.empty());
 
@@ -4761,6 +4762,8 @@ connect normally, join lobbies, play games, and use the proxy server. See\n\
 README.md and system/config.json for more information. Server mode options:\n\
   --config=FILENAME: use this config file instead of system/config.json\n\
   --data-dir=DIR: store players, licenses, and teams in DIR instead of system\n\
+  --bind-address=ADDR: listen on ADDR for ports that config.json gives as bare\n\
+      numbers (default: all interfaces)\n\
 \n\
 When ACTION is given, newserv will do things other than running the server.\n\
 \n\

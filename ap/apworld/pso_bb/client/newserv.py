@@ -3,7 +3,7 @@ import asyncio
 import json
 import urllib.request
 
-NEWSERV_URL = "http://127.0.0.1:11500"
+NEWSERV_URL = "http://127.0.0.1:11500"  # mirrored in ap/generate_release.sh (HTTPListen)
 
 # slot_data keys newserv applies with `ap-set` (mirrored in src/ArchipelagoShellCommands.cc)
 SERVER_SETTINGS = ("exp_multiplier",)
@@ -13,9 +13,10 @@ class NewservError(Exception):
     pass
 
 
-def _post(path: str, body: dict) -> dict:
-    req = urllib.request.Request(NEWSERV_URL + path, data=json.dumps(body).encode(),
-                                 headers={"Content-Type": "application/json"}, method="POST")
+def _request(path: str, body: dict | None = None) -> dict:
+    """GET, or POST when there's a body."""
+    data = json.dumps(body).encode() if body is not None else None
+    req = urllib.request.Request(NEWSERV_URL + path, data=data, headers={"Content-Type": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=5) as resp:
             return json.load(resp)
@@ -31,7 +32,16 @@ def _post(path: str, body: dict) -> dict:
 
 async def shell(command: str) -> str:
     """Run a newserv shell command; returns its output."""
-    return (await asyncio.to_thread(_post, "/y/shell-exec", {"command": command}))["result"]
+    return (await asyncio.to_thread(_request, "/y/shell-exec", {"command": command}))["result"]
+
+
+async def is_up() -> bool:
+    """Whether a newserv answers on NEWSERV_URL."""
+    try:
+        await asyncio.to_thread(_request, "/y/server")
+        return True
+    except NewservError:
+        return False
 
 
 async def apply_settings(slot_data: dict) -> list[str]:

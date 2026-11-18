@@ -445,7 +445,7 @@ std::pair<std::string, uint16_t> DataIndex::parse_port_spec(const phosg::JSON& j
     }
     return std::make_pair(addr, json.at(1).as_int());
   } else {
-    return std::make_pair("", json.as_int());
+    return std::make_pair(this->default_bind_address, json.as_int());
   }
 }
 
@@ -544,7 +544,8 @@ void DataIndex::load_config_early() {
       try {
         for (const auto& item : this->config_json->at(json_key).as_list()) {
           if (item->is_int()) {
-            ret.emplace_back(std::format("0.0.0.0:{}", item->as_int()));
+            std::string addr = this->default_bind_address.empty() ? "0.0.0.0" : this->default_bind_address;
+            ret.emplace_back(std::format("{}:{}", addr, item->as_int()));
           } else if (!IS_WINDOWS || phosg::parse_netloc(item->as_string()).second != 0) {
             ret.emplace_back(item->as_string());
           } else {
