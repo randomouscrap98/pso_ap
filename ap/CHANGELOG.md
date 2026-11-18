@@ -1,18 +1,10 @@
 # Changelog
 
-User-facing changes for players and testers. `ap/publish_release.py` publishes the Unreleased section as release
-notes and moves it under the new version.
+User-facing changes for players and testers. Prereleases (`ap/publish_release.py`) publish the Unreleased section
+as-is: everything since the last real release. For a real release, Unreleased is renamed to the version and
+cleaned up, then published with `--final`. The script never edits this file.
 
 ## Unreleased
-
-### Options
-- New **Money Multiplier** option (Quality of Life, 1-20): multiplies Meseta from enemy and box drops and from quest
-  rewards. Selling items is unaffected. Each drop is capped at 65535 Meseta.
-
-### Server
-- Updated to the latest upstream newserv.
-
-## 0.0.1-pre.1 (2026-11-18)
 
 Early test build: the apworld generates and the client runs the server, but checks and items are placeholders
 (nothing to play for yet).
@@ -29,7 +21,10 @@ Early test build: the apworld generates and the client runs the server, but chec
 - `/server <host>` forwards the game to a friend's server, so you can play on theirs.
 
 ### Options
-- New "Quality of Life" option group with **EXP Multiplier** (1-20, whole numbers).
+- New "Quality of Life" option group:
+  - **EXP Multiplier** (1-20, whole numbers).
+  - **Money Multiplier** (1-20): multiplies Meseta from enemy and box drops and from quest rewards. Selling items
+    is unaffected. Each drop is capped at 65535 Meseta.
 
 ### Settings (host.yaml, `pso_bb_options`)
 - `expose_server`: let friends on other computers join your server (off by default: only your computer can
@@ -37,7 +32,7 @@ Early test build: the apworld generates and the client runs the server, but chec
 - `newserv_config`: use your own newserv `config.json`.
 
 ### Server
-- Builds for Windows and Linux.
+- Builds for Windows and Linux, based on the latest upstream newserv.
 - Only reachable from your own computer unless you turn on `expose_server`.
 
 ### Linux
