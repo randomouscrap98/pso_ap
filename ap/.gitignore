@@ -1,2 +1,4 @@
 __pycache__/
 server_release.py
+# GitHub token for publish_release.py (fine-grained, this repo only, Contents: read and write)
+.github_token
