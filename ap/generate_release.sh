@@ -47,9 +47,10 @@ stage_server() { # exe
   sed -e 's/"LocalAddress": "[^"]*"/"LocalAddress": "127.0.0.1"/' \
       -e 's/"ExternalAddress": "[^"]*"/"ExternalAddress": "127.0.0.1"/' \
       -e 's/"DNSServerPort": 53,/"DNSServerPort": 0,/' \
+      -e 's/"HTTPListen": \[\],/"HTTPListen": ["127.0.0.1:11500"],/' \
       system/config.example.json > "$stage/$name/system/config.json"
-  for k in LocalAddress ExternalAddress DNSServerPort; do
-    grep -q "\"$k\": \(\"127.0.0.1\"\|0\)" "$stage/$name/system/config.json" ||
+  for k in LocalAddress ExternalAddress DNSServerPort HTTPListen; do
+    grep -q "\"$k\": \(\"127.0.0.1\"\|0\|\[\"127.0.0.1:11500\"\]\)" "$stage/$name/system/config.json" ||
       { echo "generate_release.sh: failed to set $k in config.json (example changed?)" >&2; exit 1; }
   done
 }

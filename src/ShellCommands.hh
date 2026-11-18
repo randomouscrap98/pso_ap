@@ -29,8 +29,9 @@ struct ShellCommand {
   const char* help_text;
   asio::awaitable<std::deque<std::string>> (*run)(Args&);
 
-  static std::vector<const ShellCommand*> commands_by_order;
-  static std::unordered_map<std::string, const ShellCommand*> commands_by_name;
+  // Function-local statics so commands can be registered from other translation units (static init order)
+  static std::vector<const ShellCommand*>& commands_by_order();
+  static std::unordered_map<std::string, const ShellCommand*>& commands_by_name();
 
   ShellCommand(const char* name, const char* help_text, asio::awaitable<std::deque<std::string>> (*run)(Args&));
 

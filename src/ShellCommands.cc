@@ -14,8 +14,14 @@
 #include "ServerState.hh"
 #include "StaticGameData.hh"
 
-std::vector<const ShellCommand*> ShellCommand::commands_by_order;
-std::unordered_map<std::string, const ShellCommand*> ShellCommand::commands_by_name;
+std::vector<const ShellCommand*>& ShellCommand::commands_by_order() {
+  static std::vector<const ShellCommand*> ret;
+  return ret;
+}
+std::unordered_map<std::string, const ShellCommand*>& ShellCommand::commands_by_name() {
+  static std::unordered_map<std::string, const ShellCommand*> ret;
+  return ret;
+}
 
 exit_shell::exit_shell() : runtime_error("shell exited") {}
 
@@ -50,8 +56,8 @@ std::shared_ptr<Client> ShellCommand::Args::get_proxy_client() const {
 ShellCommand::ShellCommand(
     const char* name, const char* help_text, asio::awaitable<std::deque<std::string>> (*run)(Args&))
     : name(name), help_text(help_text), run(run) {
-  ShellCommand::commands_by_order.emplace_back(this);
-  ShellCommand::commands_by_name.emplace(this->name, this);
+  ShellCommand::commands_by_order().emplace_back(this);
+  ShellCommand::commands_by_name().emplace(this->name, this);
 }
 
 asio::awaitable<std::deque<std::string>> ShellCommand::dispatch_str(
@@ -68,7 +74,7 @@ asio::awaitable<std::deque<std::string>> ShellCommand::dispatch_str(
 asio::awaitable<std::deque<std::string>> ShellCommand::dispatch(Args& args) {
   const ShellCommand* def = nullptr;
   try {
-    def = commands_by_name.at(args.command);
+    def = commands_by_name().at(args.command);
   } catch (const std::out_of_range&) {
   }
   if (!def) {
@@ -117,7 +123,7 @@ ShellCommand c_help(
     You\'re reading it now.",
     +[](ShellCommand::Args&) -> asio::awaitable<std::deque<std::string>> {
       std::deque<std::string> ret({"Commands:"});
-      for (const auto& def : ShellCommand::commands_by_order) {
+      for (const auto& def : ShellCommand::commands_by_order()) {
         if (def->help_text) {
           // TODO: It's not great that we copy the text here.
           auto& s = ret.emplace_back("  ");

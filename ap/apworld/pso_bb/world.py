@@ -2,9 +2,10 @@ from collections.abc import Mapping
 from typing import Any
 
 from BaseClasses import ItemClassification, Tutorial
+from Options import OptionGroup
 from worlds.AutoWorld import WebWorld, World
 
-from . import items, locations, regions
+from . import items, locations, options, regions
 from .options import PSOBBOptions
 
 
@@ -12,6 +13,11 @@ class PSOBBWebWorld(WebWorld):
     theme = "dirt"
     tutorials = [Tutorial("Multiworld Setup Guide", "Setting up PSOBB for Archipelago.", "English",
                           "setup_en.md", "setup/en", ["haloopdy"])]
+    option_groups = [
+        OptionGroup("Quality of Life", [
+            options.EXPMultiplier,
+        ]),
+    ]
 
 
 class PSOBBWorld(World):
@@ -46,4 +52,7 @@ class PSOBBWorld(World):
         return items.FILLER
 
     def fill_slot_data(self) -> Mapping[str, Any]:
-        return {"slot_data_version": 1}
+        return {
+            "slot_data_version": 1,
+            "exp_multiplier": self.options.exp_multiplier.value,
+        }

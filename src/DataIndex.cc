@@ -545,7 +545,7 @@ void DataIndex::load_config_early() {
         for (const auto& item : this->config_json->at(json_key).as_list()) {
           if (item->is_int()) {
             ret.emplace_back(std::format("0.0.0.0:{}", item->as_int()));
-          } else if (!IS_WINDOWS) {
+          } else if (!IS_WINDOWS || phosg::parse_netloc(item->as_string()).second != 0) {
             ret.emplace_back(item->as_string());
           } else {
             config_log.warning_f("Unix sockets are not supported on Windows; skipping address {}", item->as_string());

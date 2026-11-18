@@ -7,6 +7,7 @@ import Utils
 from CommonClient import ClientCommandProcessor, CommonContext, get_base_parser, handle_url_arg, server_loop
 
 from ..items import GAME
+from . import newserv
 from .forwarder import Forwarder
 
 logger = logging.getLogger("PSOBB")
@@ -53,8 +54,16 @@ class PSOBBContext(CommonContext):
     def on_package(self, cmd: str, args: dict) -> None:
         if cmd == "Connected":
             logger.info("Connected to slot %s", self.auth)
+            self.settings_task = asyncio.create_task(self.apply_server_settings(args.get("slot_data", {})))
         elif cmd == "ReceivedItems":
             logger.info("Received %d item(s) (total %d)", len(args["items"]), len(self.items_received))
+
+    async def apply_server_settings(self, slot_data: dict) -> None:
+        try:
+            for line in await newserv.apply_settings(slot_data):
+                logger.info("newserv: %s", line)
+        except newserv.NewservError as e:
+            logger.warning("Couldn't apply settings to newserv (reconnect to retry): %s", e)
 
     def make_gui(self):
         from kvui import GameManager  # only reached when the GUI is enabled

@@ -1,3 +1,4 @@
 name: PSOTest
 game: Phantasy Star Online Blue Burst
-Phantasy Star Online Blue Burst: {}
+Phantasy Star Online Blue Burst:
+  exp_multiplier: 3
