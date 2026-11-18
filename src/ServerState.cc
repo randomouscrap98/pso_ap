@@ -19,6 +19,7 @@
 #include "SendCommands.hh"
 #include "Text.hh"
 #include "TextIndex.hh"
+#include "UserDataDirectory.hh"
 
 std::shared_ptr<ServerState> ServerState::create_shared(std::shared_ptr<DataIndex> data, bool is_replay) {
   std::shared_ptr<ServerState> s(new ServerState());
@@ -291,7 +292,7 @@ void ServerState::load_accounts() {
 
 void ServerState::load_teams() {
   config_log.info_f("Indexing teams");
-  this->team_index = std::make_shared<TeamIndex>("system/teams", this->data->team_reward_defs_json);
+  this->team_index = std::make_shared<TeamIndex>(user_data_dir + "/teams", this->data->team_reward_defs_json);
 }
 
 void ServerState::load_ep3_tournament_state() {

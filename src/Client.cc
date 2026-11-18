@@ -17,6 +17,7 @@
 #include "SendCommands.hh"
 #include "Server.hh"
 #include "Version.hh"
+#include "UserDataDirectory.hh"
 
 const uint64_t CLIENT_CONFIG_MAGIC = 0x8399AC32;
 
@@ -465,7 +466,7 @@ void Client::set_login(std::shared_ptr<Login> login) {
 // System file
 
 std::string Client::system_filename(const std::string& bb_username) {
-  return std::format("system/players/system_{}.psosys", bb_username);
+  return std::format("{}/players/system_{}.psosys", user_data_dir, bb_username);
 }
 
 std::string Client::system_filename() const {
@@ -504,7 +505,7 @@ void Client::save_system_file() const {
 // Guild Card file
 
 std::string Client::guild_card_filename(const std::string& bb_username) {
-  return std::format("system/players/guild_cards_{}.psocard", bb_username);
+  return std::format("{}/players/guild_cards_{}.psocard", user_data_dir, bb_username);
 }
 
 std::string Client::guild_card_filename() const {
@@ -549,11 +550,11 @@ std::string Client::character_filename(const std::string& bb_username, ssize_t i
   if (index < 0) {
     throw std::logic_error("character index is not set");
   }
-  return std::format("system/players/player_{}_{}.psochar", bb_username, index);
+  return std::format("{}/players/player_{}_{}.psochar", user_data_dir, bb_username, index);
 }
 
 std::string Client::backup_character_filename(uint32_t account_id, size_t index, bool is_ep3) {
-  return std::format("system/players/backup_player_{}_{}.{}",
+  return std::format("{}/players/backup_player_{}_{}.{}", user_data_dir,
       account_id, index, is_ep3 ? "pso3char" : "psochar");
 }
 
@@ -749,9 +750,9 @@ std::string Client::bank_filename(const std::string& bb_username, ssize_t index)
     throw std::logic_error("non-BB players do not have saved bank files");
   }
   if (index < 0) {
-    return std::format("system/players/shared_bank_{}.psobank", bb_username);
+    return std::format("{}/players/shared_bank_{}.psobank", user_data_dir, bb_username);
   } else {
-    return std::format("system/players/player_{}_{}.psobank", bb_username, index);
+    return std::format("{}/players/player_{}_{}.psobank", user_data_dir, bb_username, index);
   }
 }
 
@@ -854,7 +855,7 @@ std::string Client::legacy_account_filename() const {
   if (!this->login || !this->login->bb_license) {
     throw std::logic_error("client is not logged in");
   }
-  return std::format("system/players/account_{}.nsa", this->login->bb_license->username);
+  return std::format("{}/players/account_{}.nsa", user_data_dir, this->login->bb_license->username);
 }
 
 std::string Client::legacy_player_filename() const {
@@ -867,7 +868,7 @@ std::string Client::legacy_player_filename() const {
   if (this->bb_character_index < 0) {
     throw std::logic_error("character index is not set");
   }
-  return std::format("system/players/player_{}_{}.nsc",
+  return std::format("{}/players/player_{}_{}.nsc", user_data_dir,
       this->login->bb_license->username, static_cast<ssize_t>(this->bb_character_index + 1));
 }
 

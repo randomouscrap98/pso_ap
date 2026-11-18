@@ -54,6 +54,7 @@
 #include "StaticTests.hh"
 #include "Text.hh"
 #include "TextIndex.hh"
+#include "UserDataDirectory.hh"
 
 bool use_terminal_colors = false;
 
@@ -4509,9 +4510,13 @@ Action a_run_server_replay_log(
         config_log.info_f("newserv {} compiled at {}", GIT_REVISION_HASH, build_date);
       }
 
-      if (!std::filesystem::is_directory("system/players")) {
+      if (auto data_dir = args.get<std::string>("data-dir"); !data_dir.empty()) {
+        user_data_dir = data_dir;
+        config_log.info_f("Using user data directory {}", user_data_dir);
+      }
+      if (!std::filesystem::is_directory(user_data_dir + "/players")) {
         config_log.info_f("Players directory does not exist; creating it");
-        std::filesystem::create_directories("system/players");
+        std::filesystem::create_directories(user_data_dir + "/players");
       }
 
       const auto& args_replay_log_filenames = args.get_multi<std::string>("replay-log");
@@ -4753,7 +4758,9 @@ Usage:\n\
 \n\
 If ACTION is not specified, newserv runs in server mode. PSO clients can\n\
 connect normally, join lobbies, play games, and use the proxy server. See\n\
-README.md and system/config.json for more information.\n\
+README.md and system/config.json for more information. Server mode options:\n\
+  --config=FILENAME: use this config file instead of system/config.json\n\
+  --data-dir=DIR: store players, licenses, and teams in DIR instead of system\n\
 \n\
 When ACTION is given, newserv will do things other than running the server.\n\
 \n\

@@ -10,6 +10,7 @@
 #include "ItemData.hh"
 #include "Loggers.hh"
 #include "StaticGameData.hh"
+#include "UserDataDirectory.hh"
 
 TeamIndex::Team::Member::Member(const phosg::JSON& json)
     : flags(json.get_int("Flags", 0)), points(json.get_int("Points", 0)), name(json.get_string("Name", "")) {
@@ -41,11 +42,11 @@ TeamIndex::Team::Team(uint32_t team_id) : Team() {
 }
 
 std::string TeamIndex::Team::json_filename() const {
-  return std::format("system/teams/{:08X}.json", this->team_id);
+  return std::format("{}/teams/{:08X}.json", user_data_dir, this->team_id);
 }
 
 std::string TeamIndex::Team::flag_filename() const {
-  return std::format("system/teams/{:08X}.bmp", this->team_id);
+  return std::format("{}/teams/{:08X}.bmp", user_data_dir, this->team_id);
 }
 
 void TeamIndex::Team::load_config() {

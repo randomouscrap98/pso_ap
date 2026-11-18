@@ -9,6 +9,7 @@
 #include <phosg/Time.hh>
 
 #include "Account.hh"
+#include "UserDataDirectory.hh"
 
 std::shared_ptr<DCNTELicense> DCNTELicense::from_json(const phosg::JSON& json) {
   auto ret = std::make_shared<DCNTELicense>();
@@ -398,13 +399,13 @@ void Account::save() const {
     auto json = this->json();
     std::string json_data = json.serialize(
         phosg::JSON::SerializeOption::FORMAT | phosg::JSON::SerializeOption::HEX_INTEGERS);
-    std::string filename = std::format("system/licenses/{:010}.json", this->account_id);
+    std::string filename = std::format("{}/licenses/{:010}.json", user_data_dir, this->account_id);
     phosg::save_file(filename, json_data);
   }
 }
 
 void Account::delete_file() const {
-  std::filesystem::remove(std::format("system/licenses/{:010}.json", this->account_id));
+  std::filesystem::remove(std::format("{}/licenses/{:010}.json", user_data_dir, this->account_id));
 }
 
 std::string Login::str() const {
@@ -1019,14 +1020,15 @@ std::shared_ptr<Account> AccountIndex::create_temporary_account_for_shared_accou
 
 AccountIndex::AccountIndex(bool force_all_temporary) : force_all_temporary(force_all_temporary) {
   if (!this->force_all_temporary) {
-    if (!std::filesystem::is_directory("system/licenses")) {
-      std::filesystem::create_directories("system/licenses");
+    std::string licenses_dir = user_data_dir + "/licenses";
+    if (!std::filesystem::is_directory(licenses_dir)) {
+      std::filesystem::create_directories(licenses_dir);
     } else {
-      for (const auto& item : std::filesystem::directory_iterator("system/licenses")) {
+      for (const auto& item : std::filesystem::directory_iterator(licenses_dir)) {
         std::string filename = item.path().filename().string();
         if (filename.ends_with(".json")) {
           try {
-            phosg::JSON json = phosg::JSON::parse(phosg::load_file("system/licenses/" + filename));
+            phosg::JSON json = phosg::JSON::parse(phosg::load_file(licenses_dir + "/" + filename));
             this->add(std::make_shared<Account>(json));
           } catch (const std::exception& e) {
             phosg::log_error_f("Failed to index account {}", filename);
