@@ -3,6 +3,7 @@
 #   release/pso_bb.apworld
 #   release/PSOBB-AP-newserv-<version>-windows.zip     (newserv.exe + system/)
 #   release/PSOBB-AP-newserv-<version>-linux.tar.gz    (static newserv + system/)
+#   release/psobb-ap.yml                               (Lutris installer for the game client)
 # newserv is built in its own dirs (release/windows, release/linux; Release = stripped), never build/. system/ only
 # gets git-tracked files (no players/, teams/, caches or a local config.json) plus a config.json generated from
 # config.example.json for local play (127.0.0.1, DNS off).
@@ -77,6 +78,7 @@ print(f"FILES = {{'windows': {entry(win)!r}, 'linux': {entry(linux)!r}}}")
 EOF
 ap/apworld.sh build
 cp build/apworlds/pso_bb.apworld "$release/"
+cp ap/lutris/psobb-ap.yml "$release/"
 
 echo "Release files in $release:"
 ls -l "$release"
