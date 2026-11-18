@@ -1,0 +1,42 @@
+# Lutris installer: Tethealla 1.25.13 PSO Blue Burst client for PSOBB Archipelago.
+# Install:  lutris -i psobb-ap.yml   (Flatpak: flatpak run net.lutris.Lutris -i psobb-ap.yml)
+# The client connects to 127.0.0.1; run newserv locally or the AP client's forwarder.
+name: PSOBB Archipelago
+game_slug: psobb-archipelago
+version: Tethealla 1.25.13 (English)
+slug: psobb-archipelago-tethealla
+runner: wine
+
+script:
+  game:
+    exe: drive_c/PSOBB/online.exe
+    working_dir: $GAMEDIR/drive_c/PSOBB
+    prefix: $GAMEDIR
+    arch: win64
+    launch_configs:
+      - name: Game only (skip launcher)
+        exe: drive_c/PSOBB/Psobb.exe
+        working_dir: $GAMEDIR/drive_c/PSOBB
+
+  files:
+    - client:
+        url: https://web.archive.org/web/20240402011115id_/https://ragol.org/files/bb/TethVer12513_English.zip
+        filename: TethVer12513_English.zip
+
+  installer:
+    - task:
+        name: create_prefix
+        arch: win64
+        prefix: $GAMEDIR
+    - task:
+        name: winetricks
+        app: win7
+        prefix: $GAMEDIR
+    - extract:
+        file: client
+        dst: $GAMEDIR/drive_c/PSOBB
+    - task:
+        name: wineexec
+        executable: regedit
+        args: /S "C:\PSOBB\install.reg"
+        prefix: $GAMEDIR
