@@ -8,8 +8,8 @@
 
 Token: GITHUB_TOKEN env var, or ap/.github_token (gitignored). Use a fine-grained token for this repo only with
 "Contents: read and write". The working tree must be clean except CHANGELOG.md, and HEAD pushed, so the release
-matches its tag. Builds with ap/generate_release.sh (pass build env like WIN_PREFIX through); the repo, tag and file
-names come from the stamp in the built apworld."""
+matches its tag. Builds with ap/generate_release.sh (pass build env like WIN_PREFIX through); the GitHub repo comes
+from ap/release.json and the file names from the stamp in the built apworld."""
 import argparse
 import datetime
 import json
@@ -25,6 +25,7 @@ import zipfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CHANGELOG = os.path.join(ROOT, "ap", "CHANGELOG.md")
 TOKEN_FILE = os.path.join(ROOT, "ap", ".github_token")
+REPO = json.load(open(os.path.join(ROOT, "ap", "release.json")))["repo"]  # also read by generate_release.sh
 RELEASE_DIR = os.path.join(ROOT, "release")
 UNRELEASED = "Unreleased"
 
@@ -110,9 +111,10 @@ class GitHub:
             self.request("DELETE", f"/git/refs/tags/{release['tag_name']}")
 
 
-def next_prerelease(version: str) -> int:
-    tags = git("ls-remote", "--tags", "origin", f"v{version}-pre.*")
-    numbers = [int(m) for m in re.findall(rf"refs/tags/v{re.escape(version)}-pre\.(\d+)$", tags, re.M)]
+def next_prerelease(gh: "GitHub", version: str) -> int:
+    refs = gh.request("GET", f"/git/matching-refs/tags/v{version}-pre.")
+    numbers = [int(m.group(1)) for r in refs if (m := re.fullmatch(rf"refs/tags/v{re.escape(version)}-pre\.(\d+)",
+                                                                     r["ref"]))]
     return max(numbers, default=0) + 1
 
 
@@ -129,7 +131,7 @@ def main() -> None:
     parser.add_argument("--final", action="store_true", help="draft a real release instead of a prerelease")
     final = parser.parse_args().final
 
-    token = read_token()
+    gh = GitHub(REPO, read_token())
     head = check_tree()
     version = json.load(open(os.path.join(ROOT, "ap", "apworld", "pso_bb", "archipelago.json")))["world_version"]
     header, sections = read_sections()
@@ -138,9 +140,10 @@ def main() -> None:
     if final:
         suffix = ""
         pre = [f"### {t}\n\n{text}" for t, text in sections if t.startswith(f"{version}-pre.") and text]
-        notes = "\n\n".join(([f"### {UNRELEASED}\n\n{unreleased}"] if unreleased else []) + pre)
+        # Headings only to tell parts apart: with no prereleases, the notes are just Unreleased
+        notes = "\n\n".join(([f"### {UNRELEASED}\n\n{unreleased}"] if unreleased else []) + pre) if pre else unreleased
     else:
-        suffix = f"pre.{next_prerelease(version)}"
+        suffix = f"pre.{next_prerelease(gh, version)}"
         notes = unreleased
     if not notes:
         fail(f"nothing to publish: the {UNRELEASED} section of {CHANGELOG} is empty")
@@ -152,11 +155,9 @@ def main() -> None:
     stamp = read_stamp()
     if stamp["VERSION"] != full_version:
         fail(f"built {stamp['VERSION']}, expected {full_version}")
-    repo = re.match(r"https://github\.com/([^/]+/[^/]+)/releases/download/", stamp["URL_BASE"]).group(1)
     files = [os.path.join(RELEASE_DIR, name) for name, _, _ in stamp["FILES"].values()]
     files += [os.path.join(RELEASE_DIR, "pso_bb.apworld"), os.path.join(RELEASE_DIR, "psobb-ap.yml")]
 
-    gh = GitHub(repo, token)
     tag = f"v{full_version}"
     body = f"{notes}\n\nBuilt from {head}."
     release = gh.create_release(tag, head, body, prerelease=not final, draft=final)
