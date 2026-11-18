@@ -18,6 +18,8 @@ Early test build: the apworld generates and the client runs the server, but chec
 - Each seed gets its own save folder (`psobb/saves/` in your Archipelago folder), so every seed starts with fresh
   characters.
 - Server output appears in a "Server" tab and in `psobb/newserv.log`.
+- The client copies the game files the server needs from your PSOBB folder, finding it automatically (Lutris
+  install, or `C:\PSOBB`) or asking you with a folder browser. `/game_directory [path]` changes it.
 - `/server <host>` forwards the game to a friend's server, so you can play on theirs.
 
 ### Options
@@ -29,11 +31,15 @@ Early test build: the apworld generates and the client runs the server, but chec
 ### Settings (host.yaml, `pso_bb_options`)
 - `expose_server`: let friends on other computers join your server (off by default: only your computer can
   connect).
+- `game_directory`: your PSOBB game folder (filled in automatically once found).
 - `newserv_config`: use your own newserv `config.json`.
 
 ### Server
 - Builds for Windows and Linux, based on the latest upstream newserv.
 - Only reachable from your own computer unless you turn on `expose_server`.
+
+### Docs
+- Setup guide covering install, generating and hosting, and playing.
 
 ### Linux
 - Lutris installer (`psobb-ap.yml`) for the Tethealla 1.25.13 game client under Wine.

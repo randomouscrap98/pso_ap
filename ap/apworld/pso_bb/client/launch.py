@@ -7,10 +7,12 @@ import re
 import Utils
 from CommonClient import ClientCommandProcessor, CommonContext, get_base_parser, handle_url_arg, server_loop
 from MultiServer import mark_raw
+from settings import get_settings
 
+from ..host_settings import PSOBBSettings
 from ..items import GAME
 from ..world import PSOBBWorld
-from . import newserv, server_install
+from . import newserv, patch_data, server_install
 from .forwarder import Forwarder
 from .server_process import ServerProcess, server_log
 
@@ -39,6 +41,13 @@ class PSOBBCommandProcessor(ClientCommandProcessor):
         """Download the PSOBB server for this apworld, or /install_server <path> to install a zip/tarball you have."""
         path = path.strip().strip('"')
         asyncio.run_coroutine_threadsafe(self.ctx.install_server(path or None), self.ctx.loop)
+        return True
+
+    @mark_raw  # raw text: shlex would eat Windows backslashes
+    def _cmd_game_directory(self, path: str = "") -> bool:
+        """Set your PSOBB game folder (the server needs some of its files). No path opens a folder browser."""
+        path = path.strip().strip('"')
+        asyncio.run_coroutine_threadsafe(self.ctx.set_game_directory(path or None), self.ctx.loop)
         return True
 
     def _cmd_server_info(self) -> bool:
@@ -104,10 +113,53 @@ class PSOBBContext(CommonContext):
         if not server_install.is_installed():
             logger.info(server_install.status_message())
             return
+        if not patch_data.is_copied(server_install.install_dir()) and not await self.copy_patch_data():
+            return
         settings = PSOBBWorld.settings
         config = settings.newserv_config or None
         if await self.newserv_process.ensure_running(self.save_dir(), bool(settings.expose_server), config):
             await self.apply_server_settings(self.slot_data)
+
+    async def copy_patch_data(self) -> bool:
+        """Copy the game files the server needs, finding the game folder (or asking for it) first."""
+        game = patch_data.find_game(PSOBBWorld.settings.game_directory)
+        if game is None:
+            logger.info("Couldn't find your PSOBB game folder; pick it in the folder browser.")
+            game = await self.browse_game_directory()
+            if game is None:
+                logger.error("The server needs files from your PSOBB game folder (the one with Psobb.exe and data/). "
+                             "Set it with /game_directory <path>, or /game_directory to browse.")
+                return False
+        self.save_game_directory(game)
+        count = await asyncio.to_thread(patch_data.copy, game, server_install.install_dir())
+        logger.info("Copied %d game files from %s into the server", count, game)
+        return True
+
+    async def browse_game_directory(self) -> str | None:
+        path = await asyncio.to_thread(PSOBBSettings.GameDirectory("").browse)
+        if path and not patch_data.game_data_dir(path.resolve()):
+            logger.error("%s isn't a PSOBB game folder (no data/data.gsl)", path.resolve())
+            return None
+        return path.resolve() if path else None
+
+    def save_game_directory(self, game: str) -> None:
+        """Remember the game folder in host.yaml (pso_bb_options.game_directory)."""
+        settings = PSOBBWorld.settings
+        if settings.game_directory != game:
+            settings.game_directory = PSOBBSettings.GameDirectory(game)
+            get_settings().save()
+            logger.info("Saved game folder %s to host.yaml", game)
+
+    async def set_game_directory(self, path: str | None) -> None:
+        game = await self.browse_game_directory() if path is None else path
+        if game is None:
+            return
+        if not patch_data.game_data_dir(game):
+            logger.error("%s isn't a PSOBB game folder (no data/data.gsl)", game)
+            return
+        self.save_game_directory(game)
+        if self.slot_data is not None:  # connected: the server may have been waiting for this
+            await self.start_server()
 
     async def apply_server_settings(self, slot_data: dict) -> None:
         try:

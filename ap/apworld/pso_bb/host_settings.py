@@ -13,5 +13,11 @@ class PSOBBSettings(settings.Group):
         """Use your own newserv config.json instead of the one shipped with the server. It must keep
         "HTTPListen": ["127.0.0.1:11500"] so the client can talk to newserv."""
 
+    class GameDirectory(settings.OptionalUserFolderPath):
+        """Your PSOBB game folder (with Psobb.exe and data/). The server needs some of its files, which the client
+        copies over. Empty: the client looks in the usual places and asks you if it can't find it."""
+        description = "PSOBB game folder (with Psobb.exe)"  # folder browser title: "Select ..."
+
     expose_server: typing.Union[ExposeServer, bool] = False
+    game_directory: typing.Optional[GameDirectory] = None
     newserv_config: typing.Optional[NewservConfig] = None
