@@ -5,9 +5,10 @@ import logging
 
 import Utils
 from CommonClient import ClientCommandProcessor, CommonContext, get_base_parser, handle_url_arg, server_loop
+from MultiServer import mark_raw
 
 from ..items import GAME
-from . import newserv
+from . import newserv, server_install
 from .forwarder import Forwarder
 
 logger = logging.getLogger("PSOBB")
@@ -30,6 +31,18 @@ class PSOBBCommandProcessor(ClientCommandProcessor):
         asyncio.run_coroutine_threadsafe(coro, self.ctx.loop)
         return True
 
+    @mark_raw  # raw text: shlex would eat Windows backslashes
+    def _cmd_install_server(self, path: str = "") -> bool:
+        """Download the PSOBB server for this apworld, or /install_server <path> to install a zip/tarball you have."""
+        path = path.strip().strip('"')
+        asyncio.run_coroutine_threadsafe(self.ctx.install_server(path or None), self.ctx.loop)
+        return True
+
+    def _cmd_server_info(self) -> bool:
+        """Show the installed PSOBB server."""
+        logger.info(server_install.status_message())
+        return True
+
 
 class PSOBBContext(CommonContext):
     game = GAME
@@ -40,6 +53,7 @@ class PSOBBContext(CommonContext):
         super().__init__(server_address, password)
         self.loop = asyncio.get_running_loop()
         self.forwarder = Forwarder()
+        self.installing = False
 
     async def shutdown(self) -> None:
         await self.forwarder.stop()
@@ -57,6 +71,18 @@ class PSOBBContext(CommonContext):
             self.settings_task = asyncio.create_task(self.apply_server_settings(args.get("slot_data", {})))
         elif cmd == "ReceivedItems":
             logger.info("Received %d item(s) (total %d)", len(args["items"]), len(self.items_received))
+
+    async def install_server(self, path: str | None) -> None:
+        if self.installing:
+            logger.info("Server install already in progress")
+            return
+        self.installing = True
+        try:
+            logger.info("Installed server at %s", await asyncio.to_thread(server_install.install, path))
+        except server_install.InstallError as e:
+            logger.error("Server install failed: %s", e)
+        finally:
+            self.installing = False
 
     async def apply_server_settings(self, slot_data: dict) -> None:
         try:
@@ -79,6 +105,7 @@ async def main(args) -> None:
     ctx = PSOBBContext(args.connect, args.password)
     ctx.auth = args.name
     ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
+    logger.info(server_install.status_message())
     if Utils.gui_enabled:
         ctx.run_gui()
     ctx.run_cli()
