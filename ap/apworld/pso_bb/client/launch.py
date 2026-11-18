@@ -16,7 +16,7 @@ from . import newserv, patch_data, server_install
 from .forwarder import Forwarder
 from .server_process import ServerProcess, server_log
 
-logger = logging.getLogger("PSOBB")
+logger = logging.getLogger("Client")  # CommonClient's logger: the main tab in Kivy and aplite
 
 
 class PSOBBCommandProcessor(ClientCommandProcessor):
@@ -173,11 +173,10 @@ class PSOBBContext(CommonContext):
 
         class PSOBBManager(GameManager):
             base_title = "PSOBB Client"
-            logging_pairs = [("Client", "Archipelago"), ("PSOBB", "PSOBB")]
 
             def build(self):
                 container = super().build()
-                # Not in logging_pairs: those also feed the All tab (Kivy's default tab); server output is noisy
+                # Not in logging_pairs: with more than one, Kivy's first tab becomes "All"; server output is noisy
                 self.add_client_tab("Server", UILog(server_log))
                 return container
 

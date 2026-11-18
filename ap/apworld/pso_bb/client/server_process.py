@@ -11,7 +11,7 @@ import Utils
 
 from . import newserv, server_install
 
-logger = logging.getLogger("PSOBB")
+logger = logging.getLogger("Client")  # CommonClient's logger: the main tab in Kivy and aplite
 server_log = logging.getLogger("Newserv")  # top-level name: aplite gives it its own tab
 
 READY_TIMEOUT = 60  # seconds
@@ -77,7 +77,8 @@ class ServerProcess:
             if not self.running:
                 return False  # _read_output reports the exit
             if await newserv.is_up():
-                logger.info("Server ready")
+                logger.info("Server ready. Start the game and log in with any username and password "
+                            "(a new account is created automatically).")
                 return True
             await asyncio.sleep(0.5)
         logger.error("Server didn't become ready within %ds; see the Server tab or %s", READY_TIMEOUT, log_path())

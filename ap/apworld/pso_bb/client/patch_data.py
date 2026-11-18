@@ -7,7 +7,7 @@ import os
 import shutil
 import sys
 
-logger = logging.getLogger("PSOBB")
+logger = logging.getLogger("Client")  # CommonClient's logger: the main tab in Kivy and aplite
 
 PATTERNS = ("map_*.dat", "map_*.evt", "unitxt_*", "data.gsl")
 MARKER = "data.gsl"  # present in the server once the copy is done; each server version installs fresh

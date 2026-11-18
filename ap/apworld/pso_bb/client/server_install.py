@@ -19,7 +19,7 @@ try:
 except ImportError:
     stamp = None
 
-logger = logging.getLogger("PSOBB")
+logger = logging.getLogger("Client")  # CommonClient's logger: the main tab in Kivy and aplite
 
 DEV_VERSION = "dev"
 VERSION = stamp.VERSION if stamp else DEV_VERSION

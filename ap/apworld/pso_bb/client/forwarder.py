@@ -4,7 +4,7 @@ server's ExternalAddress directly, so only these first hops pass through here.""
 import asyncio
 import logging
 
-logger = logging.getLogger("PSOBB")
+logger = logging.getLogger("Client")  # CommonClient's logger: the main tab in Kivy and aplite
 
 BB_PORTS = (11000, 12000)  # bb-patch, bb-data1
 
