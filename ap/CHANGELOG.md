@@ -5,6 +5,13 @@ notes and moves it under the new version.
 
 ## Unreleased
 
+### Options
+- New **Money Multiplier** option (Quality of Life, 1-20): multiplies Meseta from enemy and box drops and from quest
+  rewards. Selling items is unaffected. Each drop is capped at 65535 Meseta.
+
+### Server
+- Updated to the latest upstream newserv.
+
 ## 0.0.1-pre.1 (2026-11-18)
 
 Early test build: the apworld generates and the client runs the server, but checks and items are placeholders

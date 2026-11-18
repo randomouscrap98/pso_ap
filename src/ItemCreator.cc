@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 
+#include "Archipelago.hh"
 #include "EnemyType.hh"
 #include "Loggers.hh"
 
@@ -400,7 +401,7 @@ uint32_t ItemCreator::choose_meseta_amount(const CommonItemSet::Table::Range<uin
   }
 
   this->log.info_f("Chose {} Meseta from range [{}, {}]", ret, range.min, range.max);
-  return ret;
+  return ap_scale_meseta(ret, 0xFFFF); // callers store 16 bits
 }
 
 bool ItemCreator::should_allow_meseta_drops() const {

@@ -6,7 +6,7 @@ import urllib.request
 NEWSERV_URL = "http://127.0.0.1:11500"  # mirrored in ap/generate_release.sh (HTTPListen)
 
 # slot_data keys newserv applies with `ap-set` (mirrored in src/ArchipelagoShellCommands.cc)
-SERVER_SETTINGS = ("exp_multiplier",)
+SERVER_SETTINGS = ("exp_multiplier", "money_multiplier")
 
 
 class NewservError(Exception):

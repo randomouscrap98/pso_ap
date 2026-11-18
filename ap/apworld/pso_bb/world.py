@@ -17,6 +17,7 @@ class PSOBBWebWorld(WebWorld):
     option_groups = [
         OptionGroup("Quality of Life", [
             options.EXPMultiplier,
+            options.MoneyMultiplier,
         ]),
     ]
 
@@ -58,4 +59,5 @@ class PSOBBWorld(World):
         return {
             "slot_data_version": 1,
             "exp_multiplier": self.options.exp_multiplier.value,
+            "money_multiplier": self.options.money_multiplier.value,
         }

@@ -5,6 +5,7 @@
 #include <phosg/Strings.hh>
 #include <stdexcept>
 
+#include "Archipelago.hh"
 #include "ShellCommands.hh"
 
 namespace {
@@ -14,19 +15,28 @@ struct APSetting {
   std::function<void(ServerState&, const std::string&)> set;
 };
 
-// Keys match the apworld's slot_data keys. Values are runtime-only: a restart or `reload config` resets them.
+float parse_multiplier(const std::string& v) {
+  float f = std::stof(v);
+  if (!(f > 0.0f)) {
+    throw std::runtime_error("multiplier must be positive");
+  }
+  return f;
+}
+
+// Keys match the apworld's slot_data keys. Values are runtime-only: a restart (or `reload config`, for settings
+// newserv's config also has) resets them.
 const std::map<std::string, APSetting>& ap_settings() {
   static const std::map<std::string, APSetting> ret = {
       {"exp_multiplier", {
                              [](ServerState& s) { return std::format("{}", s.data->bb_global_exp_multiplier); },
                              [](ServerState& s, const std::string& v) {
-                               float f = std::stof(v);
-                               if (!(f > 0.0f)) {
-                                 throw std::runtime_error("exp_multiplier must be positive");
-                               }
-                               s.data->bb_global_exp_multiplier = f; // games copy this at creation
+                               s.data->bb_global_exp_multiplier = parse_multiplier(v); // games copy this at creation
                              },
                          }},
+      {"money_multiplier", {
+                                [](ServerState&) { return std::format("{}", ap_money_multiplier); },
+                                [](ServerState&, const std::string& v) { ap_money_multiplier = parse_multiplier(v); },
+                            }},
   };
   return ret;
 }
@@ -34,7 +44,8 @@ const std::map<std::string, APSetting>& ap_settings() {
 ShellCommand c_ap_set(
     "ap-set", "ap-set [KEY [VALUE]]\n\
     Archipelago slot setting. No arguments lists all; KEY alone shows one.\n\
-    Settings apply to games created afterward and reset on restart.",
+    Settings reset on restart. exp_multiplier only applies to games created\n\
+    afterward; money_multiplier applies immediately.",
     +[](ShellCommand::Args& args) -> asio::awaitable<std::deque<std::string>> {
       auto tokens = phosg::split(args.args, ' ');
       std::erase(tokens, "");

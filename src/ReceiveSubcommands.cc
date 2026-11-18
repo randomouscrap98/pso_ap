@@ -8,6 +8,7 @@
 #include <phosg/Strings.hh>
 #include <phosg/Vector.hh>
 
+#include "Archipelago.hh"
 #include "Client.hh"
 #include "Compression.hh"
 #include "GameServer.hh"
@@ -4299,7 +4300,7 @@ static void on_adjust_player_meseta_bb(std::shared_ptr<Client> c, SubcommandMess
 
     ItemData item;
     item.data1[0] = 0x04;
-    item.data2d = cmd.amount;
+    item.data2d = ap_scale_meseta(cmd.amount, 999999); // on-hand Meseta limit
     item.id = l->generate_item_id(c->lobby_client_id);
     p->add_item(item, *s->data->item_stack_limits(c->version()));
     send_create_inventory_item_to_lobby(c, c->lobby_client_id, item);
