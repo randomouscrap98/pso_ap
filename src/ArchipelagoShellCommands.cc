@@ -6,6 +6,9 @@
 #include <stdexcept>
 
 #include "Archipelago.hh"
+#include "Lobby.hh"
+#include "SendCommands.hh"
+#include "ServerState.hh"
 #include "ShellCommands.hh"
 
 namespace {
@@ -30,7 +33,16 @@ const std::map<std::string, APSetting>& ap_settings() {
       {"exp_multiplier", {
                              [](ServerState& s) { return std::format("{}", s.data->bb_global_exp_multiplier); },
                              [](ServerState& s, const std::string& v) {
-                               s.data->bb_global_exp_multiplier = parse_multiplier(v); // games copy this at creation
+                               float mult = parse_multiplier(v);
+                               s.data->bb_global_exp_multiplier = mult; // new games copy this at creation
+                               // Running games too: the server computes EXP from the game's copy, and 6xDD updates
+                               // what the client displays (it's also sent when a client joins).
+                               for (const auto& [_, l] : s.id_to_lobby) {
+                                 if (l->is_game()) {
+                                   l->base_exp_multiplier = mult;
+                                   send_set_exp_multiplier(l);
+                                 }
+                               }
                              },
                          }},
       {"money_multiplier", {
@@ -44,8 +56,8 @@ const std::map<std::string, APSetting>& ap_settings() {
 ShellCommand c_ap_set(
     "ap-set", "ap-set [KEY [VALUE]]\n\
     Archipelago slot setting. No arguments lists all; KEY alone shows one.\n\
-    Settings reset on restart. exp_multiplier only applies to games created\n\
-    afterward; money_multiplier applies immediately.",
+    Settings reset on restart. Changes apply immediately, including to games\n\
+    already running.",
     +[](ShellCommand::Args& args) -> asio::awaitable<std::deque<std::string>> {
       auto tokens = phosg::split(args.args, ' ');
       std::erase(tokens, "");

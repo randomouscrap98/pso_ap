@@ -21,6 +21,9 @@ Early test build: the apworld generates and the client runs the server, but chec
 - The client copies the game files the server needs from your PSOBB folder, finding it automatically (Lutris
   install, or `C:\PSOBB`) or asking you with a folder browser. `/game_directory [path]` changes it.
 - `/server <host>` forwards the game to a friend's server, so you can play on theirs.
+- `/ap_set` changes the EXP and Money multipliers after generation, e.g. `/ap_set exp_multiplier 5`. Changes
+  apply right away (even in a game you're already in) and stick for that seed; `/ap_set exp_multiplier default`
+  goes back to your yaml's value. `/help` lists all client commands.
 
 ### Options
 - New "Quality of Life" option group:

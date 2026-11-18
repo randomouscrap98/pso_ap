@@ -3,10 +3,13 @@ import asyncio
 import json
 import urllib.request
 
+from ..options import EXPMultiplier, MoneyMultiplier
+
 NEWSERV_URL = "http://127.0.0.1:11500"  # mirrored in ap/generate_release.sh (HTTPListen)
 
-# slot_data keys newserv applies with `ap-set` (mirrored in src/ArchipelagoShellCommands.cc)
-SERVER_SETTINGS = ("exp_multiplier", "money_multiplier")
+# slot_data keys newserv applies with `ap-set` (mirrored in src/ArchipelagoShellCommands.cc) -> the option that
+# bounds them, so `/ap_set` accepts the same values as the player yaml
+SERVER_SETTINGS = {"exp_multiplier": EXPMultiplier, "money_multiplier": MoneyMultiplier}
 
 
 class NewservError(Exception):
@@ -44,6 +47,18 @@ async def is_up() -> bool:
         return False
 
 
-async def apply_settings(slot_data: dict) -> list[str]:
-    """Push the slot's server settings to newserv; returns newserv's confirmations."""
-    return [await shell(f"ap-set {key} {slot_data[key]}") for key in SERVER_SETTINGS if key in slot_data]
+def parse_setting(key: str, value: str) -> int:
+    """Validate a `/ap_set` value against the setting's option range; raises ValueError."""
+    option = SERVER_SETTINGS[key]
+    try:
+        n = int(value)
+    except ValueError:
+        raise ValueError(f"{key} must be a whole number") from None
+    if not option.range_start <= n <= option.range_end:
+        raise ValueError(f"{key} must be {option.range_start}-{option.range_end}")
+    return n
+
+
+async def apply_settings(settings: dict) -> list[str]:
+    """Push server settings (slot_data with any overrides on top) to newserv; returns newserv's confirmations."""
+    return [await shell(f"ap-set {key} {settings[key]}") for key in SERVER_SETTINGS if key in settings]
