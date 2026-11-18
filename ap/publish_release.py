@@ -3,7 +3,8 @@
 Never edits the changelog.
 
   ap/publish_release.py           prerelease v<world_version>-pre.N (next N); notes = the "Unreleased" section
-                                  (everything since the last real release)
+                                  (everything since the last real release). Keeps the newest KEEP_PRERELEASES
+                                  prereleases, deleting older ones (release and tag)
   ap/publish_release.py --final   draft release v<world_version>; notes = the "<world_version>" section (Unreleased
                                   renamed and cleaned up beforehand); publish the draft on GitHub
 
@@ -28,6 +29,7 @@ TOKEN_FILE = os.path.join(ROOT, "ap", ".github_token")
 REPO = json.load(open(os.path.join(ROOT, "ap", "release.json")))["repo"]  # also read by generate_release.sh
 RELEASE_DIR = os.path.join(ROOT, "release")
 UNRELEASED = "Unreleased"
+KEEP_PRERELEASES = 5
 
 
 def fail(msg: str) -> None:
@@ -103,6 +105,16 @@ class GitHub:
             self.request("DELETE", f"/git/refs/tags/{release['tag_name']}")
 
 
+def prune_prereleases(gh: "GitHub") -> None:
+    """Delete all but the newest KEEP_PRERELEASES published prereleases made by this script (and their tags)."""
+    releases = gh.request("GET", "/releases?per_page=100")
+    pre = [r for r in releases if r["prerelease"] and not r["draft"] and re.fullmatch(r"v.+-pre\.\d+", r["tag_name"])]
+    pre.sort(key=lambda r: r["created_at"], reverse=True)
+    for r in pre[KEEP_PRERELEASES:]:
+        print(f"Deleting old prerelease {r['tag_name']}")
+        gh.delete_release(r)
+
+
 def next_prerelease(gh: "GitHub", version: str) -> int:
     refs = gh.request("GET", f"/git/matching-refs/tags/v{version}-pre.")
     numbers = [int(m.group(1)) for r in refs if (m := re.fullmatch(rf"refs/tags/v{re.escape(version)}-pre\.(\d+)",
@@ -157,6 +169,8 @@ def main() -> None:
         raise
 
     print(f"{'Draft' if final else 'Prerelease'} {tag}: {release['html_url']}")
+    if not final:
+        prune_prereleases(gh)
 
 
 if __name__ == "__main__":
