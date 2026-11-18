@@ -2541,7 +2541,7 @@ static void on_open_shop_bb_or_ep3_battle_subs(std::shared_ptr<Client> c, Subcom
     size_t level = c->character_file()->disp.stats.level + 1;
     switch (cmd.shop_type) {
       case 0:
-        c->bb_shop_contents[0] = l->item_creator->generate_tool_shop_contents(level);
+        c->bb_shop_contents[0] = l->item_creator->generate_tool_shop_contents(level, s->data->bb_extended_tool_shop_enabled);
         break;
       case 1:
         c->bb_shop_contents[1] = l->item_creator->generate_weapon_shop_contents(level);
@@ -2554,7 +2554,18 @@ static void on_open_shop_bb_or_ep3_battle_subs(std::shared_ptr<Client> c, Subcom
       default:
         throw std::runtime_error("invalid shop type");
     }
-    for (auto& item : c->bb_shop_contents[cmd.shop_type]) {
+
+    // The client ignores 6xB6 (leaving the player softlocked) if the shop has too many items. This can't happen with
+    // the default shop random sets, but it can if they've been edited, so we drop the extra items in that case.
+    static const std::array<size_t, 3> max_items = {18, 16, decltype(G_ShopContents_BB_6xB6::item_datas)::size()};
+    auto& contents = c->bb_shop_contents[cmd.shop_type];
+    if (contents.size() > max_items[cmd.shop_type]) {
+      c->log.warning_f("Shop type {} has {} items but the client can only handle {}; dropping the extra items",
+          cmd.shop_type, contents.size(), max_items[cmd.shop_type]);
+      contents.resize(max_items[cmd.shop_type]);
+    }
+
+    for (auto& item : contents) {
       item.id = 0xFFFFFFFF;
       item.data2d = s->data->item_parameter_table(c->version())->price_for_item(item);
     }
