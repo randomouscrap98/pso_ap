@@ -6,6 +6,7 @@ from Options import OptionGroup
 from worlds.AutoWorld import WebWorld, World
 
 from . import items, locations, options, regions
+from .slot_data_upgrade import SLOT_DATA_VERSION
 from .host_settings import PSOBBSettings
 from .options import PSOBBOptions
 
@@ -60,7 +61,7 @@ class PSOBBWorld(World):
 
     def fill_slot_data(self) -> Mapping[str, Any]:
         return {
-            "slot_data_version": 1,
+            "slot_data_version": SLOT_DATA_VERSION,  # bump rules: slot_data_upgrade.py
             "exp_multiplier": self.options.exp_multiplier.value,
             "money_multiplier": self.options.money_multiplier.value,
             "mag_feeding": self.options.mag_feeding.current_key,  # newserv's ap-set takes the name

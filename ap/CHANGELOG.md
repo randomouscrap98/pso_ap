@@ -21,6 +21,8 @@ Early test build: the apworld generates and the client runs the server, but chec
 - The client copies the game files the server needs from your PSOBB folder, finding it automatically (Lutris
   install, or `C:\PSOBB`) or asking you with a folder browser. `/game_directory [path]` changes it.
 - `/server <host>` forwards the game to a friend's server, so you can play on theirs.
+- Seeds made with an older apworld keep working: settings they didn't have yet behave as they did then (e.g.
+  vanilla mag feeding). A seed made with a newer apworld is refused with a message to update.
 - `/ap_set` changes the EXP and Money multipliers, mag feeding and the server name after generation, e.g.
   `/ap_set exp_multiplier 5` or `/ap_set server_name Ragol Ship`. Changes apply right away (even in a game you're
   already in) and stick for that seed; `/ap_set exp_multiplier default` goes back to your yaml's

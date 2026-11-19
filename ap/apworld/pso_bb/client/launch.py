@@ -12,6 +12,7 @@ from MultiServer import mark_raw
 from settings import get_settings
 
 from ..host_settings import PSOBBSettings
+from .. import slot_data_upgrade
 from ..items import GAME
 from ..world import PSOBBWorld
 from . import newserv, patch_data, server_install
@@ -93,7 +94,12 @@ class PSOBBContext(CommonContext):
     def on_package(self, cmd: str, args: dict) -> None:
         if cmd == "Connected":
             logger.info("Connected to slot %s", self.auth)
-            self.slot_data = args.get("slot_data", {})
+            try:
+                self.slot_data = slot_data_upgrade.upgrade(args.get("slot_data", {}))
+            except slot_data_upgrade.SeedTooNew as e:
+                logger.error("Can't play this seed: %s. Update the apworld, then reconnect.", e)
+                asyncio.create_task(self.disconnect())
+                return
             self.start_server_task = asyncio.create_task(self.start_server())
         elif cmd == "ReceivedItems":
             logger.info("Received %d item(s) (total %d)", len(args["items"]), len(self.items_received))
