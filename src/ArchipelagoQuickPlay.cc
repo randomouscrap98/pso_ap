@@ -9,6 +9,7 @@
 #include "Lobby.hh"
 #include "Menu.hh"
 #include "ReceiveCommands.hh"
+#include "SendCommands.hh"
 #include "ServerState.hh"
 
 namespace {
@@ -86,16 +87,37 @@ std::pair<Episode, Difficulty> ap_quick_play_choice(uint32_t difficulty_item_id)
   return {checked_episode((difficulty_item_id >> 12) & 0x0F), static_cast<Difficulty>(difficulty)};
 }
 
-void ap_on_lobby_arrival(std::shared_ptr<Client> c) {
+// The client takes Solo mode (offline maps) from its own Create Team choice, not from the server's 64 command, and
+// quick play skips Create Team. So before joining, set the client's is-solo global the way Create Team does
+// (0x0079ADB8 stores it right before sending C1). Address found by RE of the Tethealla client; see the notes'
+// research/solo-mode.md. Other clients get a Normal game instead, since a Solo game would desync their maps.
+constexpr uint32_t SPECIFIC_VERSION_BB_59NL = 0x35394E4C;
+constexpr uint32_t BB_59NL_IS_SOLO_ADDR = 0x00AAB1CC;
+
+static asio::awaitable<bool> set_client_solo_flag(std::shared_ptr<Client> c) {
+  if (c->specific_version != SPECIFIC_VERSION_BB_59NL) {
+    c->log.warning_f("Quick play: unknown client version {:08X}; creating a Normal game", c->specific_version);
+    co_return false;
+  }
+  co_await prepare_client_for_patches(c);
+  auto s = c->require_server_state();
+  auto fn = s->data->client_functions->get("WriteMemory", c->specific_version);
+  static const char one[4] = {1, 0, 0, 0}; // uint32 1, little-endian (x86 client)
+  co_await send_function_call(c, fn, {{"dest_addr", BB_59NL_IS_SOLO_ADDR}, {"size", sizeof(one)}}, one, sizeof(one));
+  co_return true;
+}
+
+asio::awaitable<void> ap_on_lobby_arrival(std::shared_ptr<Client> c) {
   if (!c->ap_quick_play) {
-    return;
+    co_return;
   }
   auto [episode, difficulty] = *c->ap_quick_play;
   c->ap_quick_play.reset(); // one attempt: on failure the player just stays in the lobby
+  GameMode mode = (co_await set_client_solo_flag(c)) ? GameMode::SOLO : GameMode::NORMAL;
   auto s = c->require_server_state();
   std::string name = c->character_file()->disp.visual.name.decode(c->language());
   // Sends the player a message box and returns null if it can't create the game
-  auto game = create_game_generic(s, c, name, "", episode, GameMode::SOLO, difficulty);
+  auto game = create_game_generic(s, c, name, "", episode, mode, difficulty);
   if (game) {
     s->change_client_lobby(c, game);
     c->set_flag(Client::Flag::LOADING);

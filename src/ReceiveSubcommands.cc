@@ -1635,7 +1635,7 @@ static void on_warp(std::shared_ptr<Client>, SubcommandMessage& msg) {
   msg.check_size_t<G_InterLevelWarp_6x94>();
 }
 
-static void on_set_player_visible(std::shared_ptr<Client> c, SubcommandMessage& msg) {
+static asio::awaitable<void> on_set_player_visible(std::shared_ptr<Client> c, SubcommandMessage& msg) {
   const auto& cmd = msg.check_size_t<G_SetPlayerVisibility_6x22_6x23>();
 
   if (cmd.header.client_id == c->lobby_client_id) {
@@ -1655,7 +1655,7 @@ static void on_set_player_visible(std::shared_ptr<Client> c, SubcommandMessage& 
           send_update_team_reward_flags(c);
           send_all_nearby_team_metadatas_to_client(c, false);
         }
-        ap_on_lobby_arrival(c); // Archipelago quick play
+        co_await ap_on_lobby_arrival(c); // Archipelago quick play
       } else if (c->check_flag(Client::Flag::LOADING_RUNNING_JOINABLE_QUEST) && (c->version() != Version::BB_V4)) {
         c->clear_flag(Client::Flag::LOADING_RUNNING_JOINABLE_QUEST);
         c->log.info_f("LOADING_RUNNING_JOINABLE_QUEST flag cleared");

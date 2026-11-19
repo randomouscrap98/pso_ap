@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <asio.hpp>
 #include <cmath>
 #include <cstdint>
 #include <memory>
@@ -31,4 +32,4 @@ std::shared_ptr<const Menu> ap_quick_play_difficulty_menu(std::shared_ptr<const 
 Episode ap_quick_play_episode(uint32_t episode_item_id);
 std::pair<Episode, Difficulty> ap_quick_play_choice(uint32_t difficulty_item_id);
 // Called when a client has arrived in a lobby; creates and joins its pending quick play game, if any
-void ap_on_lobby_arrival(std::shared_ptr<Client> c);
+asio::awaitable<void> ap_on_lobby_arrival(std::shared_ptr<Client> c);
