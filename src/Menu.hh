@@ -34,6 +34,10 @@ constexpr uint32_t TOURNAMENT_ENTRIES = 0xCC0000CC;
 // Archipelago (ArchipelagoQuickPlay.cc)
 constexpr uint32_t AP_QUICK_PLAY_EPISODE = 0xDD0000DD;
 constexpr uint32_t AP_QUICK_PLAY_DIFFICULTY = 0xDD1111DD;
+// Archipelago (ArchipelagoWarp.cc): quest counter "Return to a floor". Quest menu IDs: low byte = episode, next byte =
+// icon (0 = online quest), see S_QuestMenuEntryT in CommandFormats.hh
+constexpr uint32_t AP_GOTO_CATEGORY = 0xDD220001;
+constexpr uint32_t AP_GOTO_FLOOR = 0xDD330001;
 } // namespace MenuID
 
 namespace MainMenuItemID {

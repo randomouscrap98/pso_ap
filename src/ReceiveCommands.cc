@@ -3102,6 +3102,12 @@ static asio::awaitable<void> on_10(std::shared_ptr<Client> c, Channel::Message& 
     case MenuID::QUEST_EP3:
       on_10_ep3_download_quest_menu(c, base_cmd.item_id);
       break;
+    case MenuID::AP_GOTO_CATEGORY:
+      ap_goto_send_floor_menu(c);
+      break;
+    case MenuID::AP_GOTO_FLOOR:
+      ap_goto_menu_select(c, base_cmd.item_id);
+      break;
     case MenuID::PATCH_SWITCHES:
       on_10_patch_switches(c, base_cmd.item_id);
       break;

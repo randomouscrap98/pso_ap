@@ -7,13 +7,17 @@
 #include <phosg/JSON.hh>
 #include <set>
 #include <string>
+#include <vector>
 
 #include "Archipelago.hh"
 #include "Client.hh"
+#include "CommandFormats.hh"
 #include "Lobby.hh"
 #include "Loggers.hh"
+#include "Menu.hh"
 #include "SendCommands.hh"
 #include "StaticGameData.hh"
+#include "Text.hh"
 #include "UserDataDirectory.hh"
 
 namespace {
@@ -149,4 +153,58 @@ void ap_goto(std::shared_ptr<Client> c, const std::string& args) {
     return;
   }
   send_warp(c, target->floor, true);
+}
+
+bool ap_goto_menu_available(std::shared_ptr<Client> c) {
+  auto l = c->lobby.lock();
+  return (c->version() == Version::BB_V4) && l && l->is_game() && is_free_play(*l) &&
+      !reached_floors()[reached_key(*l)].empty();
+}
+
+void ap_goto_send_floor_menu(std::shared_ptr<Client> c) {
+  if (!ap_goto_menu_available(c)) {
+    send_lobby_message_box(c, "$C7No floors reached yet.");
+    return;
+  }
+  auto l = c->lobby.lock();
+  std::vector<S_QuestMenuEntry_BB_A2_A4> entries;
+  for (uint8_t floor : reached_floors()[reached_key(*l)]) {
+    const auto& def = FloorDefinition::get(l->episode, floor);
+    auto& e = entries.emplace_back();
+    e.menu_id = MenuID::AP_GOTO_FLOOR;
+    e.item_id = floor;
+    e.name.encode(def.in_game_name, c->language());
+    e.short_description.encode(add_color(std::format("Warp to {}.", def.in_game_name)), c->language());
+  }
+  send_command_vt(c, 0xA2, entries.size(), entries);
+}
+
+void ap_goto_menu_select(std::shared_ptr<Client> c, uint32_t floor) {
+  auto l = c->lobby.lock();
+  if (!l || !l->is_game()) {
+    return;
+  }
+  // The quest counter flow ends here instead of loading a quest; unblock joining like a cancel (A9) would
+  if (c->lobby_client_id == l->leader_id) {
+    l->clear_flag(Lobby::Flag::QUEST_SELECTION_IN_PROGRESS);
+  }
+  const auto* def = floor_def(l->episode, floor);
+  if (!is_free_play(*l) || !def || !reached_floors()[reached_key(*l)].contains(floor)) {
+    send_lobby_message_box(c, "$C7That floor can't be\nwarped to.");
+    return;
+  }
+  // Prototype: the message box closes the counter menu like newserv's quest errors do; the warp follows it.
+  // Only the leader can use the quest counter, so everyone else on Pioneer 2 goes along.
+  c->log.info_f("Quest counter warp to {} (with everyone on Pioneer 2)", def->in_game_name);
+  send_lobby_message_box(c, std::format("$C7Warping to\n{}.", def->in_game_name));
+  for (const auto& other : l->clients) {
+    const auto* other_floor = other ? floor_def(l->episode, other->floor) : nullptr;
+    if (!other_floor || !(other_floor->flags & FloorDefinition::Flag::CITY)) {
+      continue;
+    }
+    if (other != c) {
+      send_text_message(other, std::format("$C6The leader is warping\neveryone on Pioneer 2\nto {}", def->in_game_name));
+    }
+    send_warp(other, floor, true);
+  }
 }

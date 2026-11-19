@@ -12,6 +12,7 @@
 #include <phosg/Time.hh>
 #include <set>
 
+#include "Archipelago.hh"
 #include "CommandFormats.hh"
 #include "Compression.hh"
 #include "GameServer.hh"
@@ -1628,6 +1629,13 @@ void send_quest_categories_menu_t(std::shared_ptr<Client> c, QuestMenuType menu_
     e.item_id = cat->category_id;
     e.name.encode(cat->name, c->language());
     e.short_description.encode(add_color(cat->description), c->language());
+  }
+  if (((menu_type == QuestMenuType::NORMAL) || (menu_type == QuestMenuType::SOLO)) && ap_goto_menu_available(c)) {
+    auto& e = entries.emplace_back();
+    e.menu_id = MenuID::AP_GOTO_CATEGORY;
+    e.item_id = 0;
+    e.name.encode(AP_GOTO_MENU_NAME, c->language());
+    e.short_description.encode(add_color(AP_GOTO_MENU_DESCRIPTION), c->language());
   }
 
   bool is_download_menu = (menu_type == QuestMenuType::DOWNLOAD);

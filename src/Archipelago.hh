@@ -48,3 +48,10 @@ asio::awaitable<void> ap_on_lobby_arrival(std::shared_ptr<Client> c);
 void ap_on_floor_change(std::shared_ptr<Client> c);
 // Handles "$goto [floor]": no argument lists reached floors; replies to the client itself
 void ap_goto(std::shared_ptr<Client> c, const std::string& args);
+// Quest counter version (BB): a "Return to a floor" entry in the quest category menu (AP_GOTO_CATEGORY), which opens
+// a quest-style list of reached floors (AP_GOTO_FLOOR, item ID = floor); choosing one warps instead of loading a quest
+constexpr const char* AP_GOTO_MENU_NAME = "Return to a floor";
+constexpr const char* AP_GOTO_MENU_DESCRIPTION = "Warp to a floor already\nreached on this seed.";
+bool ap_goto_menu_available(std::shared_ptr<Client> c);
+void ap_goto_send_floor_menu(std::shared_ptr<Client> c);
+void ap_goto_menu_select(std::shared_ptr<Client> c, uint32_t floor);

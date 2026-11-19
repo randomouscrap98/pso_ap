@@ -58,6 +58,9 @@ Early test build: the apworld generates and the client runs the server, but chec
   already reached (boss floors included) instead of walking the whole area again. `$goto` alone lists the reached
   floors; `$goto c3` (or the floor number) warps. Reached floors are per episode and difficulty, and shared by everyone
   playing on the same seed's server. Doesn't work in quests.
+- **Return to a floor** at the quest counter on Pioneer 2 (experimental): a new entry in the quest list that shows
+  your reached floors; pick one to warp there. Only the team leader can use the quest counter, so everyone else on
+  Pioneer 2 warps along with them (`$goto` only warps yourself).
 
 ### Docs
 - Setup guide covering install, generating and hosting, and playing.
