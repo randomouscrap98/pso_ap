@@ -43,16 +43,19 @@ Early test build: the apworld generates and the client runs the server, but chec
     characters.
 
 ### Settings (host.yaml, `pso_bb_options`)
-- `expose_server`: let friends on other computers join your server (off by default: only your computer can
-  connect).
+- `singleplayer` (default on): for playing alone. Only your computer can reach the server, any username and
+  password log you in to the same characters, the client saves a login in your game settings if none is saved (so
+  you just press Start Game; a login you already have is never replaced), and Quick play makes Solo games. Turn it
+  off to play with friends: they can join your server, everyone gets their own account by username, and Quick play
+  makes games others can join. Replaces `expose_server` (if you had set it to true, set `singleplayer: false`).
 - `game_directory`: your PSOBB game folder (filled in automatically once found).
 - `newserv_config`: use your own newserv `config.json`.
 
 ### Server
 - Builds for Windows and Linux, based on the latest upstream newserv.
-- Only reachable from your own computer unless you turn on `expose_server`.
-- **Quick play** in the server menu: pick an episode and difficulty and go straight into a Solo game, without creating
-  a team in the lobby. Only difficulties your character's level allows are listed. To play with others, go to the
+- Only reachable from your own computer unless you turn off `singleplayer`.
+- **Quick play** in the server menu: pick an episode and difficulty and go straight into a game (Solo in singleplayer,
+  joinable by friends otherwise), without creating a team in the lobby. Only difficulties your character's level allows are listed. To play with others, go to the
   lobby as before.
 - **`$goto`** chat command: after a crash or logging off, warp from Pioneer 2 straight back to any floor you've
   already reached (boss floors included) instead of walking the whole area again. `$goto` alone lists the reached

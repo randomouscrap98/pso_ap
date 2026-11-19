@@ -1,6 +1,7 @@
-// Archipelago quick play: start a solo game from the main menu instead of the lobby's team counter.
+// Archipelago quick play: start a game from the main menu instead of the lobby's team counter. Singleplayer mode
+// makes Solo games; otherwise Normal games (named after the character, no password), which friends can join.
 // Flow: main menu "Quick play" -> episode menu -> difficulty menu -> "Go to lobby" with Client::ap_quick_play set ->
-// on arrival in the lobby (6x23), create a solo game and move the client into it (the same steps as the C1 handler).
+// on arrival in the lobby (6x23), create the game and move the client into it (the same steps as the C1 handler).
 #include <format>
 #include <stdexcept>
 
@@ -38,6 +39,10 @@ Episode checked_episode(uint32_t value) {
   throw std::runtime_error(std::format("invalid quick play episode {}", value));
 }
 
+const char* game_kind() {
+  return ap_singleplayer ? "solo game" : "game";
+}
+
 } // namespace
 
 std::shared_ptr<const Menu> ap_quick_play_episode_menu() {
@@ -45,7 +50,7 @@ std::shared_ptr<const Menu> ap_quick_play_episode_menu() {
   menu->items.emplace_back(AP_QUICK_PLAY_GO_BACK, "Go back", "Return to the\nmain menu", 0);
   for (Episode episode : EPISODES) {
     menu->items.emplace_back(episode_item_id(episode), name_for_episode(episode),
-        std::format("Start a solo game\nin {}", name_for_episode(episode)), 0);
+        std::format("Start a {}\nin {}", game_kind(), name_for_episode(episode)), 0);
   }
   return menu;
 }
@@ -63,7 +68,7 @@ std::shared_ptr<const Menu> ap_quick_play_difficulty_menu(std::shared_ptr<const 
     size_t min_level = s->data->default_min_level_for_game(c->version(), episode, difficulty);
     if (free_join || min_level <= p->disp.stats.level) {
       menu->items.emplace_back(difficulty_item_id(episode, difficulty), name_for_difficulty(difficulty),
-          std::format("Start a solo game\nin {}\non {}", name_for_episode(episode), name_for_difficulty(difficulty)), 0);
+          std::format("Start a {}\nin {}\non {}", game_kind(), name_for_episode(episode), name_for_difficulty(difficulty)), 0);
     }
   }
   return menu;
@@ -89,22 +94,26 @@ std::pair<Episode, Difficulty> ap_quick_play_choice(uint32_t difficulty_item_id)
 
 // The client takes Solo mode (offline maps) from its own Create Team choice, not from the server's 64 command, and
 // quick play skips Create Team. So before joining, set the client's is-solo global the way Create Team does
-// (0x0079ADB8 stores it right before sending C1). Address found by RE of the Tethealla client; see the notes'
-// research/solo-mode.md. Other clients get a Normal game instead, since a Solo game would desync their maps.
+// (0x0079ADB8 stores it right before sending C1): 1 for Solo, and 0 for Normal, since the client keeps the value
+// from an earlier Solo game. Address found by RE of the Tethealla client; see the notes' research/solo-mode.md.
+// Other clients always get a Normal game, since a Solo game would desync their maps.
 constexpr uint32_t SPECIFIC_VERSION_BB_59NL = 0x35394E4C;
 constexpr uint32_t BB_59NL_IS_SOLO_ADDR = 0x00AAB1CC;
 
-static asio::awaitable<bool> set_client_solo_flag(std::shared_ptr<Client> c) {
+// Returns the mode to create: Solo only if requested and the client's flag could be set
+static asio::awaitable<GameMode> set_client_solo_flag(std::shared_ptr<Client> c, bool solo) {
   if (c->specific_version != SPECIFIC_VERSION_BB_59NL) {
-    c->log.warning_f("Quick play: unknown client version {:08X}; creating a Normal game", c->specific_version);
-    co_return false;
+    if (solo) {
+      c->log.warning_f("Quick play: unknown client version {:08X}; creating a Normal game", c->specific_version);
+    }
+    co_return GameMode::NORMAL;
   }
   co_await prepare_client_for_patches(c);
   auto s = c->require_server_state();
   auto fn = s->data->client_functions->get("WriteMemory", c->specific_version);
-  static const char one[4] = {1, 0, 0, 0}; // uint32 1, little-endian (x86 client)
-  co_await send_function_call(c, fn, {{"dest_addr", BB_59NL_IS_SOLO_ADDR}, {"size", sizeof(one)}}, one, sizeof(one));
-  co_return true;
+  const char value[4] = {solo ? char(1) : char(0), 0, 0, 0}; // uint32, little-endian (x86 client)
+  co_await send_function_call(c, fn, {{"dest_addr", BB_59NL_IS_SOLO_ADDR}, {"size", sizeof(value)}}, value, sizeof(value));
+  co_return solo ? GameMode::SOLO : GameMode::NORMAL;
 }
 
 asio::awaitable<void> ap_on_lobby_arrival(std::shared_ptr<Client> c) {
@@ -113,7 +122,7 @@ asio::awaitable<void> ap_on_lobby_arrival(std::shared_ptr<Client> c) {
   }
   auto [episode, difficulty] = *c->ap_quick_play;
   c->ap_quick_play.reset(); // one attempt: on failure the player just stays in the lobby
-  GameMode mode = (co_await set_client_solo_flag(c)) ? GameMode::SOLO : GameMode::NORMAL;
+  GameMode mode = co_await set_client_solo_flag(c, ap_singleplayer);
   auto s = c->require_server_state();
   std::string name = c->character_file()->disp.visual.name.decode(c->language());
   // Sends the player a message box and returns null if it can't create the game

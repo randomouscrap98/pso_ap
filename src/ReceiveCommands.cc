@@ -127,7 +127,7 @@ static void send_main_menu(std::shared_ptr<Client> c) {
       },
       0);
   main_menu->items.emplace_back(MainMenuItemID::AP_QUICK_PLAY, "Quick play",
-      "Start a solo game\nright away", MenuItem::Flag::BB_ONLY); // Archipelago
+      "Start a game\nright away", MenuItem::Flag::BB_ONLY); // Archipelago
   main_menu->items.emplace_back(MainMenuItemID::INFORMATION, "Information",
       "View server\ninformation", MenuItem::Flag::INVISIBLE_ON_DC_PROTOS | MenuItem::Flag::REQUIRES_MESSAGE_BOXES);
 
@@ -572,6 +572,9 @@ static asio::awaitable<void> on_04_U(std::shared_ptr<Client> c, Channel::Message
   c->username = cmd.username.decode();
   c->password = cmd.password.decode();
   c->email_address = cmd.email_address.decode();
+  if (!c->username.empty() && !c->password.empty()) {
+    ap_singleplayer_credentials(*c->require_server_state()->account_index, c->username, c->password);
+  }
 
   // There are 3 cases here:
   // - No login information at all: just proceed without checking credentials
@@ -1434,6 +1437,7 @@ static asio::awaitable<void> on_93_BB(std::shared_ptr<Client> c, Channel::Messag
   c->bb_security_token = base_cmd.security_token;
   c->username = base_cmd.username.decode();
   c->password = base_cmd.password.decode();
+  ap_singleplayer_credentials(*c->require_server_state()->account_index, c->username, c->password);
 
   if (msg.data.size() == sizeof(C_LoginWithoutHardwareInfo_BB_93)) {
     c->bb_client_config = check_size_t<C_LoginWithoutHardwareInfo_BB_93>(msg.data).client_config;

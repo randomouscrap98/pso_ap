@@ -25,6 +25,7 @@ class ServerProcess:
     def __init__(self) -> None:
         self.proc: asyncio.subprocess.Process | None = None
         self.data_dir: str | None = None
+        self.singleplayer: bool | None = None  # mode the running server was started in
         self.reader: asyncio.Task | None = None
         self.stopping = False
         self.warned_external = False
@@ -35,14 +36,15 @@ class ServerProcess:
     def running(self) -> bool:
         return self.proc is not None and self.proc.returncode is None
 
-    async def ensure_running(self, data_dir: str, expose: bool, config: str | None) -> bool:
-        """Start newserv for this save dir (restarting it if it runs another), unless a newserv we didn't start
-        already answers. Returns whether newserv is up."""
+    async def ensure_running(self, data_dir: str, singleplayer: bool, config: str | None) -> bool:
+        """Start newserv for this save dir (restarting it if it runs another seed or mode), unless a newserv we didn't
+        start already answers. Returns whether newserv is up."""
         async with self.lock:
-            if self.running and self.data_dir == data_dir:
+            if self.running and self.data_dir == data_dir and self.singleplayer == singleplayer:
                 return True
             if self.running:
-                logger.info("Restarting server for a different seed")
+                logger.info("Restarting server for a different %s",
+                            "seed" if self.data_dir != data_dir else "singleplayer setting")
                 await self._stop()
             elif await newserv.is_up():
                 if not self.warned_external:
@@ -50,13 +52,13 @@ class ServerProcess:
                                    "Saves go wherever that server keeps them.", newserv.NEWSERV_URL)
                     self.warned_external = True
                 return True
-            return await self._start(data_dir, expose, config)
+            return await self._start(data_dir, singleplayer, config)
 
-    async def _start(self, data_dir: str, expose: bool, config: str | None) -> bool:
+    async def _start(self, data_dir: str, singleplayer: bool, config: str | None) -> bool:
         exe = os.path.join(server_install.install_dir(), "newserv.exe" if sys.platform == "win32" else "newserv")
         args = [exe, f"--data-dir={data_dir}"]
-        if not expose:
-            args.append("--bind-address=127.0.0.1")
+        if singleplayer:  # only this computer can connect; one account for every login (src/Archipelago.hh)
+            args += ["--bind-address=127.0.0.1", "--singleplayer"]
         if config:
             args.append(f"--config={config}")
         os.makedirs(data_dir, exist_ok=True)
@@ -70,6 +72,7 @@ class ServerProcess:
             logger.error("Couldn't start the server: %s", e)
             return False
         self.data_dir = data_dir
+        self.singleplayer = singleplayer
         self.stopping = False
         self.reader = asyncio.create_task(self._read_output(self.proc))
 
@@ -77,8 +80,11 @@ class ServerProcess:
             if not self.running:
                 return False  # _read_output reports the exit
             if await newserv.is_up():
-                logger.info("Server ready. Start the game and log in with any username and password "
-                            "(a new account is created automatically).")
+                if singleplayer:
+                    logger.info("Server ready (singleplayer). Start the game; any login works.")
+                else:
+                    logger.info("Server ready. Start the game and log in with any username and password "
+                                "(a new account is created automatically for each username).")
                 return True
             await asyncio.sleep(0.5)
         logger.error("Server didn't become ready within %ds; see the Server tab or %s", READY_TIMEOUT, log_path())

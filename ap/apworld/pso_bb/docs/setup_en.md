@@ -45,26 +45,30 @@ You don't need to download the server separately: the client downloads the match
    `host.yaml`.
 4. Wait for "Server ready", then start the game (Linux: from Lutris; Windows: `online.exe`, or `Psobb.exe` to skip the
    launcher).
-5. Log in with any username and password: the account is created automatically. Each seed has its own saves, so every
-   seed starts with fresh characters.
-6. Playing alone? Pick **Quick play** in the server menu (after choosing your character, or "Change Ship" at the lobby
-   counter), then an episode and a difficulty. You land straight in a Solo game, with no team to create. To play with
-   others, choose "Go to lobby" and create or join a team as usual.
+5. Press **Start Game** on the title menu. In singleplayer (the default) any login works and always gets you the same
+   characters, and the client saves a login in your game settings if none is saved, so you don't have to type one.
+   Each seed has its own saves, so every seed starts with fresh characters.
+6. Pick **Quick play** in the server menu (after choosing your character, or "Change Ship" at the lobby counter), then
+   an episode and a difficulty. You land straight in a game, with no team to create: a Solo game in singleplayer, or
+   a game friends can join otherwise. You can also choose "Go to lobby" and create or join a team as usual.
 
 Keep the client open while you play: closing it stops the server.
 
 ## Playing with friends (experimental, untested)
 
-The host sets `expose_server: true` (see settings below) and restarts the client. Friends open the PSOBB Client (they
-don't need to connect to Archipelago), type `/server <host's address>`, then start their game. The host may need to
-forward ports through their router.
+The host sets `singleplayer: false` (see settings below) and restarts the client. Friends open the PSOBB Client (they
+don't need to connect to Archipelago), type `/server <host's address>`, then start their game and log in with their
+own username and any password. The host may need to forward ports through their router.
 
 ## Settings
 
 Under `pso_bb_options` in `host.yaml` (in your Archipelago folder):
 
 - `game_directory`: your PSOBB game folder. Filled in automatically once found.
-- `expose_server`: let other computers join your server. Off by default: only your computer can connect.
+- `singleplayer` (default on): for playing alone. Only your computer can reach the server, every login uses the same
+  account, the client saves a login in your game settings if none is saved (it never replaces one you have), and
+  Quick play makes Solo games. Turn it off to play with friends: others can join your server, each username gets
+  its own account, and Quick play makes games others can join.
 - `newserv_config`: path to your own newserv `config.json`, for advanced users. It must keep
   `"HTTPListen": ["127.0.0.1:11500"]`.
 

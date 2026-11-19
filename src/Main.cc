@@ -22,6 +22,7 @@
 #include <unordered_map>
 
 #include "AddressTranslator.hh"
+#include "Archipelago.hh"
 #include "BMLArchive.hh"
 #include "CommonFileFormats.hh"
 #include "Compression.hh"
@@ -4546,6 +4547,7 @@ Action a_run_server_replay_log(
         data_index->is_debug = true;
       }
       data_index->default_bind_address = args.get<std::string>("bind-address");
+      ap_singleplayer = args.get<bool>("singleplayer");
       data_index->load_all(args.get<bool>("disable-fast-load") ? 1 : 0);
       auto state = ServerState::create_shared(data_index, !replay_log_filenames.empty());
 
@@ -4764,6 +4766,8 @@ README.md and system/config.json for more information. Server mode options:\n\
   --data-dir=DIR: store players, licenses, and teams in DIR instead of system\n\
   --bind-address=ADDR: listen on ADDR for ports that config.json gives as bare\n\
       numbers (default: all interfaces)\n\
+  --singleplayer: Archipelago singleplayer mode: every BB login uses one account,\n\
+      and quick play makes Solo games\n\
 \n\
 When ACTION is given, newserv will do things other than running the server.\n\
 \n\

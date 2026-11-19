@@ -10,6 +10,7 @@
 
 #include "StaticGameData.hh"
 
+class AccountIndex;
 class Client;
 struct DataIndex;
 struct Menu;
@@ -31,7 +32,13 @@ inline int ap_mag_feed_multiplier = 1;
 // Rebuilds BB's item parameter table and stream file from the two settings above
 void ap_apply_mag_feeding(DataIndex& data);
 
-// Quick play (ArchipelagoQuickPlay.cc): main menu -> episode -> difficulty -> a solo game, without the team counter.
+// Singleplayer mode (ArchipelagoSingleplayer.cc; --singleplayer, set by the AP client from host.yaml). Every BB login
+// uses the seed's one solo account, and quick play makes Solo games (otherwise Normal games, which friends can join).
+inline bool ap_singleplayer = false;
+// Replaces a BB login's credentials with the solo account's (no-op unless singleplayer, or before the first account)
+void ap_singleplayer_credentials(AccountIndex& accounts, std::string& username, std::string& password);
+
+// Quick play (ArchipelagoQuickPlay.cc): main menu -> episode -> difficulty -> a game, without the team counter.
 // The client goes to the lobby as usual; the game is created once it has arrived there (6x23), because the client
 // only accepts a game join from the lobby.
 constexpr uint32_t AP_QUICK_PLAY_GO_BACK = 0xDDFFFFDD; // item ID in both quick play menus

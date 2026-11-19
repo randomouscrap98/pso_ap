@@ -15,7 +15,7 @@ from ..host_settings import PSOBBSettings
 from .. import slot_data_upgrade
 from ..items import GAME
 from ..world import PSOBBWorld
-from . import newserv, patch_data, server_install
+from . import login_prefill, newserv, patch_data, server_install
 from .forwarder import Forwarder
 from .server_process import ServerProcess, server_log
 
@@ -133,8 +133,12 @@ class PSOBBContext(CommonContext):
             return
         settings = PSOBBWorld.settings
         config = settings.newserv_config or None
-        if await self.newserv_process.ensure_running(self.save_dir(), bool(settings.expose_server), config):
+        singleplayer = bool(settings.singleplayer)
+        if await self.newserv_process.ensure_running(self.save_dir(), singleplayer, config):
             await self.apply_server_settings(self.server_settings())
+            game = patch_data.find_game(settings.game_directory)
+            if singleplayer and game:
+                await asyncio.to_thread(login_prefill.autofill, game)
 
     async def copy_patch_data(self) -> bool:
         """Copy the game files the server needs, finding the game folder (or asking for it) first."""
