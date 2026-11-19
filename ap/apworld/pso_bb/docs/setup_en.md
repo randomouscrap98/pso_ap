@@ -71,10 +71,48 @@ Under `pso_bb_options` in `host.yaml` (in your Archipelago folder):
 - `/game_directory [path]`: set your game folder (no path opens a folder browser).
 - `/server_info`: show the installed server.
 - `/server <host>` / `/server off`: play on a friend's server.
-- `/ap_set [setting] [value]`: change a server setting (`exp_multiplier`, `money_multiplier`) for this seed after
-  generation; applies immediately. `/ap_set <setting> default` goes back to your yaml's value. `/help` lists all commands.
+- `/ap_set [setting] [value]`: change a server setting (`exp_multiplier`, `money_multiplier`, `server_name`) for this
+  seed after generation; applies immediately. `/ap_set <setting> default` goes back to your yaml's value. `/help` lists all commands.
 
 ## Troubleshooting
 
 The server's output is in the client's "Server" tab and in `psobb/newserv.log` in your Archipelago folder. Include it
 (and the client's log from `logs/`) when reporting a problem.
+
+### Capturing logs for a bug report
+
+Some logs are overwritten the next time you start things, so **save them before restarting** the client or the game.
+Write down roughly when the problem happened and what you were doing.
+
+- **Server log:** `psobb/newserv.log` in your Archipelago folder. It is replaced each time the server starts, so copy
+  it before reopening the client.
+- **Client log:** the newest file in `logs/` in your Archipelago folder (a new file per run, older ones are kept).
+
+#### Game log on Linux (Lutris)
+
+Lutris only keeps the game's output in memory (right-click the game, "Show logs") and clears it on the next launch.
+To save it to a file, launch the game from a terminal instead of the Lutris window:
+
+```
+# Flatpak Lutris (Bazzite, Steam Deck, most immutable distros)
+flatpak run net.lutris.Lutris -d lutris:rungame/psobb-archipelago 2>&1 | tee ~/psobb-game.log
+
+# Lutris installed from your distro's package manager
+lutris -d lutris:rungame/psobb-archipelago 2>&1 | tee ~/psobb-game.log
+```
+
+If the game crashes, attach `~/psobb-game.log`. For more detail, add `PROTON_LOG=1` as an environment variable
+(right-click the game, Configure, System options, Environment variables). Proton then writes a `steam-*.log` file to
+your home folder. These logs get large, so only turn this on while chasing a problem.
+
+#### If the game freezes
+
+Before closing a frozen game, gather this (it's lost once the game is closed):
+
+1. Open a terminal and run `top` (or `htop`). Find `Psobb.exe` and note its **CPU%** and **memory** (RES/VIRT).
+   Near 100% CPU means it's stuck in a loop; near 0% means it's waiting on something.
+2. Check whether the graphics driver reported an error: `journalctl -k -b | grep -i -e xid -e amdgpu -e i915`
+   (lines from around the time of the freeze matter; ignore others).
+3. Look at the last lines of the server log and the client's Server tab for disconnects or errors.
+
+Then close the game and include all of the above with the log files.

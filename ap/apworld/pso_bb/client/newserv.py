@@ -3,13 +3,15 @@ import asyncio
 import json
 import urllib.request
 
-from ..options import EXPMultiplier, MoneyMultiplier
+from Options import FreeText
+
+from ..options import EXPMultiplier, MoneyMultiplier, ServerName
 
 NEWSERV_URL = "http://127.0.0.1:11500"  # mirrored in ap/generate_release.sh (HTTPListen)
 
 # slot_data keys newserv applies with `ap-set` (mirrored in src/ArchipelagoShellCommands.cc) -> the option that
 # bounds them, so `/ap_set` accepts the same values as the player yaml
-SERVER_SETTINGS = {"exp_multiplier": EXPMultiplier, "money_multiplier": MoneyMultiplier}
+SERVER_SETTINGS = {"exp_multiplier": EXPMultiplier, "money_multiplier": MoneyMultiplier, "server_name": ServerName}
 
 
 class NewservError(Exception):
@@ -47,9 +49,12 @@ async def is_up() -> bool:
         return False
 
 
-def parse_setting(key: str, value: str) -> int:
-    """Validate a `/ap_set` value against the setting's option range; raises ValueError."""
+def parse_setting(key: str, value: str) -> int | str:
+    """Validate a `/ap_set` value the way the player yaml would; raises ValueError."""
     option = SERVER_SETTINGS[key]
+    if issubclass(option, FreeText):
+        option.validate_text(value)
+        return value
     try:
         n = int(value)
     except ValueError:

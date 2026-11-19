@@ -18,6 +18,7 @@ class PSOBBWebWorld(WebWorld):
         OptionGroup("Quality of Life", [
             options.EXPMultiplier,
             options.MoneyMultiplier,
+            options.ServerName,
         ]),
     ]
 
@@ -60,4 +61,5 @@ class PSOBBWorld(World):
             "slot_data_version": 1,
             "exp_multiplier": self.options.exp_multiplier.value,
             "money_multiplier": self.options.money_multiplier.value,
+            "server_name": self.options.server_name.value,
         }

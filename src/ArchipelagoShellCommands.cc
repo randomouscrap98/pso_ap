@@ -49,6 +49,11 @@ const std::map<std::string, APSetting>& ap_settings() {
                                 [](ServerState&) { return std::format("{}", ap_money_multiplier); },
                                 [](ServerState&, const std::string& v) { ap_money_multiplier = parse_multiplier(v); },
                             }},
+      // Read live wherever the name is shown (menus, messages, mail), so it applies immediately
+      {"server_name", {
+                          [](ServerState& s) { return s.data->name; },
+                          [](ServerState& s, const std::string& v) { s.data->name = v; },
+                      }},
   };
   return ret;
 }
@@ -56,30 +61,34 @@ const std::map<std::string, APSetting>& ap_settings() {
 ShellCommand c_ap_set(
     "ap-set", "ap-set [KEY [VALUE]]\n\
     Archipelago slot setting. No arguments lists all; KEY alone shows one.\n\
+    VALUE is the rest of the line, so it may contain spaces.\n\
     Settings reset on restart. Changes apply immediately, including to games\n\
     already running.",
     +[](ShellCommand::Args& args) -> asio::awaitable<std::deque<std::string>> {
-      auto tokens = phosg::split(args.args, ' ');
-      std::erase(tokens, "");
+      std::string key = args.args;
+      phosg::strip_whitespace(key);
+      std::string value;
+      if (size_t space = key.find(' '); space != std::string::npos) {
+        value = key.substr(space + 1);
+        phosg::strip_whitespace(value);
+        key.resize(space);
+      }
       std::deque<std::string> ret;
-      if (tokens.empty()) {
-        for (const auto& [key, setting] : ap_settings()) {
-          ret.emplace_back(std::format("{} = {}", key, setting.get(*args.s)));
+      if (key.empty()) {
+        for (const auto& [k, setting] : ap_settings()) {
+          ret.emplace_back(std::format("{} = {}", k, setting.get(*args.s)));
         }
         co_return ret;
       }
-      auto it = ap_settings().find(tokens[0]);
+      auto it = ap_settings().find(key);
       if (it == ap_settings().end()) {
-        throw std::runtime_error("unknown setting: " + tokens[0]);
+        throw std::runtime_error("unknown setting: " + key);
       }
-      if (tokens.size() > 2) {
-        throw std::runtime_error("usage: ap-set [KEY [VALUE]]");
-      }
-      if (tokens.size() == 2) {
+      if (!value.empty()) {
         try {
-          it->second.set(*args.s, tokens[1]);
+          it->second.set(*args.s, value);
         } catch (const std::invalid_argument&) {
-          throw std::runtime_error("invalid value: " + tokens[1]);
+          throw std::runtime_error("invalid value: " + value);
         }
       }
       ret.emplace_back(std::format("{} = {}", it->first, it->second.get(*args.s)));

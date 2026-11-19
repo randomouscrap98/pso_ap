@@ -52,11 +52,11 @@ class PSOBBCommandProcessor(ClientCommandProcessor):
         asyncio.run_coroutine_threadsafe(self.ctx.set_game_directory(path or None), self.ctx.loop)
         return True
 
-    def _cmd_ap_set(self, setting: str = "", value: str = "") -> bool:
+    def _cmd_ap_set(self, setting: str = "", *value: str) -> bool:
         """Change a server setting for this seed, overriding your yaml. Applies immediately and is kept for this seed.
         /ap_set lists the settings; /ap_set <setting> <value> changes one; /ap_set <setting> default goes back to
-        your yaml's value. Settings: exp_multiplier, money_multiplier (whole numbers, 1-20)."""
-        asyncio.run_coroutine_threadsafe(self.ctx.ap_set(setting, value), self.ctx.loop)
+        your yaml's value. Settings: exp_multiplier, money_multiplier (whole numbers, 1-20), server_name."""
+        asyncio.run_coroutine_threadsafe(self.ctx.ap_set(setting, " ".join(value)), self.ctx.loop)
         return True
 
     def _cmd_server_info(self) -> bool:

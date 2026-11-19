@@ -21,15 +21,18 @@ Early test build: the apworld generates and the client runs the server, but chec
 - The client copies the game files the server needs from your PSOBB folder, finding it automatically (Lutris
   install, or `C:\PSOBB`) or asking you with a folder browser. `/game_directory [path]` changes it.
 - `/server <host>` forwards the game to a friend's server, so you can play on theirs.
-- `/ap_set` changes the EXP and Money multipliers after generation, e.g. `/ap_set exp_multiplier 5`. Changes
-  apply right away (even in a game you're already in) and stick for that seed; `/ap_set exp_multiplier default`
-  goes back to your yaml's value. `/help` lists all client commands.
+- `/ap_set` changes the EXP and Money multipliers and the server name after generation, e.g.
+  `/ap_set exp_multiplier 5` or `/ap_set server_name Ragol Ship`. Changes apply right away (even in a game you're
+  already in) and stick for that seed; `/ap_set exp_multiplier default` goes back to your yaml's
+  value. `/help` lists all client commands.
 
 ### Options
 - New "Quality of Life" option group:
   - **EXP Multiplier** (1-20, whole numbers).
   - **Money Multiplier** (1-20): multiplies Meseta from enemy and box drops and from quest rewards. Selling items
     is unaffected. Each drop is capped at 65535 Meseta.
+  - **Server Name** (default "Archipelago"): the name the game shows for the server in menus and messages. Up to 15
+    characters.
 
 ### Settings (host.yaml, `pso_bb_options`)
 - `expose_server`: let friends on other computers join your server (off by default: only your computer can
@@ -43,6 +46,8 @@ Early test build: the apworld generates and the client runs the server, but chec
 
 ### Docs
 - Setup guide covering install, generating and hosting, and playing.
+- "Capturing logs for a bug report" section in the setup guide: which logs to save, how to save the game's output
+  under Lutris, and what to check before closing a frozen game.
 
 ### Linux
 - Lutris installer (`psobb-ap.yml`) for the Tethealla 1.25.13 game client under Wine.
