@@ -18,6 +18,8 @@ class PSOBBWebWorld(WebWorld):
         OptionGroup("Quality of Life", [
             options.EXPMultiplier,
             options.MoneyMultiplier,
+            options.MagFeeding,
+            options.MagFeedMultiplier,
             options.ServerName,
         ]),
     ]
@@ -61,5 +63,7 @@ class PSOBBWorld(World):
             "slot_data_version": 1,
             "exp_multiplier": self.options.exp_multiplier.value,
             "money_multiplier": self.options.money_multiplier.value,
+            "mag_feeding": self.options.mag_feeding.current_key,  # newserv's ap-set takes the name
+            "mag_feed_multiplier": self.options.mag_feed_multiplier.value,
             "server_name": self.options.server_name.value,
         }

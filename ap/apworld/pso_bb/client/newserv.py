@@ -3,15 +3,23 @@ import asyncio
 import json
 import urllib.request
 
-from Options import FreeText
+from Options import Choice, FreeText
 
-from ..options import EXPMultiplier, MoneyMultiplier, ServerName
+from ..options import EXPMultiplier, MagFeeding, MagFeedMultiplier, MoneyMultiplier, ServerName
 
 NEWSERV_URL = "http://127.0.0.1:11500"  # mirrored in ap/generate_release.sh (HTTPListen)
 
 # slot_data keys newserv applies with `ap-set` (mirrored in src/ArchipelagoShellCommands.cc) -> the option that
 # bounds them, so `/ap_set` accepts the same values as the player yaml
-SERVER_SETTINGS = {"exp_multiplier": EXPMultiplier, "money_multiplier": MoneyMultiplier, "server_name": ServerName}
+SERVER_SETTINGS = {
+    "exp_multiplier": EXPMultiplier,
+    "money_multiplier": MoneyMultiplier,
+    "mag_feeding": MagFeeding,
+    "mag_feed_multiplier": MagFeedMultiplier,
+    "server_name": ServerName,
+}
+# These change the item table the game downloads at login, so players already logged in must log in again
+RELOGIN_SETTINGS = {"mag_feeding", "mag_feed_multiplier"}
 
 
 class NewservError(Exception):
@@ -55,6 +63,11 @@ def parse_setting(key: str, value: str) -> int | str:
     if issubclass(option, FreeText):
         option.validate_text(value)
         return value
+    if issubclass(option, Choice):
+        name = value.lower()
+        if name not in option.options:
+            raise ValueError(f"{key} must be one of: {', '.join(option.options)}")
+        return name
     try:
         n = int(value)
     except ValueError:

@@ -55,7 +55,8 @@ class PSOBBCommandProcessor(ClientCommandProcessor):
     def _cmd_ap_set(self, setting: str = "", *value: str) -> bool:
         """Change a server setting for this seed, overriding your yaml. Applies immediately and is kept for this seed.
         /ap_set lists the settings; /ap_set <setting> <value> changes one; /ap_set <setting> default goes back to
-        your yaml's value. Settings: exp_multiplier, money_multiplier (whole numbers, 1-20), server_name."""
+        your yaml's value. Settings: exp_multiplier, money_multiplier (whole numbers, 1-20), mag_feeding (simple or
+        vanilla), mag_feed_multiplier (1-3), server_name."""
         asyncio.run_coroutine_threadsafe(self.ctx.ap_set(setting, " ".join(value)), self.ctx.loop)
         return True
 
@@ -220,6 +221,8 @@ class PSOBBContext(CommonContext):
             json.dump(overrides, f)
         if not await self.apply_server_settings({key: self.server_settings()[key]}):
             logger.info("Saved %s; it applies when the server starts", key)
+        elif key in newserv.RELOGIN_SETTINGS:
+            logger.info("If you're logged in to the game, log out and back in for %s to take effect", key)
 
     def make_gui(self):
         from kvui import GameManager, UILog  # only reached when the GUI is enabled

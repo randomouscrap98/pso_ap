@@ -74,8 +74,9 @@ Under `pso_bb_options` in `host.yaml` (in your Archipelago folder):
 - `/game_directory [path]`: set your game folder (no path opens a folder browser).
 - `/server_info`: show the installed server.
 - `/server <host>` / `/server off`: play on a friend's server.
-- `/ap_set [setting] [value]`: change a server setting (`exp_multiplier`, `money_multiplier`, `server_name`) for this
-  seed after generation; applies immediately. `/ap_set <setting> default` goes back to your yaml's value. `/help` lists all commands.
+- `/ap_set [setting] [value]`: change a server setting (`exp_multiplier`, `money_multiplier`, `mag_feeding`,
+  `mag_feed_multiplier`, `server_name`) for this seed after generation; applies immediately (for the mag settings,
+  log out of the game and back in). `/ap_set <setting> default` goes back to your yaml's value. `/help` lists all commands.
 
 ## Troubleshooting
 

@@ -49,6 +49,28 @@ const std::map<std::string, APSetting>& ap_settings() {
                                 [](ServerState&) { return std::format("{}", ap_money_multiplier); },
                                 [](ServerState&, const std::string& v) { ap_money_multiplier = parse_multiplier(v); },
                             }},
+      // Both rebuild the item table the client downloads at login, so players already logged in must log in again
+      {"mag_feeding", {
+                          [](ServerState&) -> std::string { return ap_simple_mag_feeding ? "simple" : "vanilla"; },
+                          [](ServerState& s, const std::string& v) {
+                            if (v != "simple" && v != "vanilla") {
+                              throw std::runtime_error("mag_feeding must be simple or vanilla");
+                            }
+                            ap_simple_mag_feeding = (v == "simple");
+                            ap_apply_mag_feeding(*s.data);
+                          },
+                      }},
+      {"mag_feed_multiplier", {
+                                  [](ServerState&) { return std::format("{}", ap_mag_feed_multiplier); },
+                                  [](ServerState& s, const std::string& v) {
+                                    int mult = std::stoi(v);
+                                    if (mult < 1) {
+                                      throw std::runtime_error("multiplier must be positive");
+                                    }
+                                    ap_mag_feed_multiplier = mult;
+                                    ap_apply_mag_feeding(*s.data);
+                                  },
+                              }},
       // Read live wherever the name is shown (menus, messages, mail), so it applies immediately
       {"server_name", {
                           [](ServerState& s) { return s.data->name; },

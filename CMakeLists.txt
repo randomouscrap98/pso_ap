@@ -52,6 +52,7 @@ set(SOURCES
     src/Account.cc
     src/AddressTranslator.cc
     src/AFSArchive.cc
+    src/ArchipelagoMags.cc
     src/ArchipelagoQuickPlay.cc
     src/ArchipelagoShellCommands.cc
     src/AsyncHTTPServer.cc

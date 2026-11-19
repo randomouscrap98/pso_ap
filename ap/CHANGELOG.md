@@ -21,7 +21,7 @@ Early test build: the apworld generates and the client runs the server, but chec
 - The client copies the game files the server needs from your PSOBB folder, finding it automatically (Lutris
   install, or `C:\PSOBB`) or asking you with a folder browser. `/game_directory [path]` changes it.
 - `/server <host>` forwards the game to a friend's server, so you can play on theirs.
-- `/ap_set` changes the EXP and Money multipliers and the server name after generation, e.g.
+- `/ap_set` changes the EXP and Money multipliers, mag feeding and the server name after generation, e.g.
   `/ap_set exp_multiplier 5` or `/ap_set server_name Ragol Ship`. Changes apply right away (even in a game you're
   already in) and stick for that seed; `/ap_set exp_multiplier default` goes back to your yaml's
   value. `/help` lists all client commands.
@@ -31,6 +31,12 @@ Early test build: the apworld generates and the client runs the server, but chec
   - **EXP Multiplier** (1-20, whole numbers).
   - **Money Multiplier** (1-20): multiplies Meseta from enemy and box drops and from quest rewards. Selling items
     is unaffected. Each drop is capped at 65535 Meseta.
+  - **Mag Feeding** (default simple): with simple feeding, each item raises one mag stat by the same amount at every
+    mag level and form: mates raise POW, fluids raise MIND, Antidote raises DEX, Antiparalysis raises DEF (small,
+    medium and large items give 0.4, 0.6 and 0.8 of a level). Every item adds a little IQ and synchro; the atomizers
+    add only IQ and synchro. Vanilla keeps the game's own feeding tables. If you change it with `/ap_set` while
+    logged in, log out and back in.
+  - **Mag Feed Multiplier** (1-3): multiplies simple feeding's stat gains. One feeding gives at most 1.27 levels.
   - **Server Name** (default "Archipelago"): the name the game shows for the server in menus and messages. Up to 15
     characters.
 
