@@ -83,6 +83,12 @@ Under `pso_bb_options` in `host.yaml` (in your Archipelago folder):
 The server's output is in the client's "Server" tab and in `psobb/newserv.log` in your Archipelago folder. Include it
 (and the client's log from `logs/`) when reporting a problem.
 
+### Game freezes after a while on Linux (Lutris)
+
+If the whole game window and audio freeze (the desktop is fine) and the game log ends with
+`fsync_free_shm_idx: Assertion ... failed`, Wine's Fsync is crashing. Turn it off: right-click the game in Lutris,
+Configure, Runner options, switch off **Enable Fsync** and **Enable Esync**, Save. New installs have both off already.
+
 ### Capturing logs for a bug report
 
 Some logs are overwritten the next time you start things, so **save them before restarting** the client or the game.

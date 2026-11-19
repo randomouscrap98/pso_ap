@@ -62,3 +62,6 @@ Early test build: the apworld generates and the client runs the server, but chec
 
 ### Linux
 - Lutris installer (`psobb-ap.yml`) for the Tethealla 1.25.13 game client under Wine.
+- Lutris installer turns off Fsync, which made the game freeze after a while (Wine crash), and Esync to be safe.
+  Existing installs: see "Game freezes after a while on Linux" in the setup guide. It also turns off FSR, BattlEye and
+  Easy Anti-Cheat, which the game doesn't use.

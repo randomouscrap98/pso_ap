@@ -18,6 +18,17 @@ script:
         exe: drive_c/PSOBB/Psobb.exe
         working_dir: $GAMEDIR/drive_c/PSOBB
 
+  # Runner options. Fsync off: GE-Proton's wineserver crashes with an fsync assertion
+  # (fsync_free_shm_idx) and the game hangs. Esync off too: this light 2004 game gains
+  # nothing from it, and plain wineserver sync is the safest path. FSR and anti-cheat
+  # runtimes aren't needed.
+  wine:
+    esync: false
+    fsync: false
+    fsr: false
+    battleye: false
+    eac: false
+
   files:
     - client:
         url: https://web.archive.org/web/20240402011115id_/https://ragol.org/files/bb/TethVer12513_English.zip
