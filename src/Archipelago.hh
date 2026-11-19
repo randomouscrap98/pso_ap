@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <utility>
 
 #include "StaticGameData.hh"
@@ -41,3 +42,9 @@ Episode ap_quick_play_episode(uint32_t episode_item_id);
 std::pair<Episode, Difficulty> ap_quick_play_choice(uint32_t difficulty_item_id);
 // Called when a client has arrived in a lobby; creates and joins its pending quick play game, if any
 asio::awaitable<void> ap_on_lobby_arrival(std::shared_ptr<Client> c);
+
+// $goto (ArchipelagoWarp.cc): warp from Pioneer 2 to a floor reached before on this seed (per episode and difficulty,
+// saved in the seed's data directory). Called after a client's floor changes, to record reached floors
+void ap_on_floor_change(std::shared_ptr<Client> c);
+// Handles "$goto [floor]": no argument lists reached floors; replies to the client itself
+void ap_goto(std::shared_ptr<Client> c, const std::string& args);

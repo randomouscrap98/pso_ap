@@ -55,6 +55,7 @@ set(SOURCES
     src/ArchipelagoMags.cc
     src/ArchipelagoQuickPlay.cc
     src/ArchipelagoShellCommands.cc
+    src/ArchipelagoWarp.cc
     src/AsyncHTTPServer.cc
     src/AsyncUtils.cc
     src/BattleParamsIndex.cc

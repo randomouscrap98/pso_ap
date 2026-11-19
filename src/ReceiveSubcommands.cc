@@ -1680,6 +1680,7 @@ static void on_change_floor_6x1F(std::shared_ptr<Client> c, SubcommandMessage& m
     const auto& cmd = msg.check_size_t<G_SetPlayerFloor_6x1F>();
     if (cmd.floor >= 0 && c->floor != static_cast<uint32_t>(cmd.floor)) {
       c->floor = cmd.floor;
+      ap_on_floor_change(c);
     }
   }
   forward_subcommand(c, msg);
@@ -1689,6 +1690,7 @@ static void on_change_floor_6x21(std::shared_ptr<Client> c, SubcommandMessage& m
   const auto& cmd = msg.check_size_t<G_InterLevelWarp_6x21>();
   if (cmd.floor >= 0 && c->floor != static_cast<uint32_t>(cmd.floor)) {
     c->floor = cmd.floor;
+    ap_on_floor_change(c);
   }
   forward_subcommand(c, msg);
 }

@@ -54,6 +54,10 @@ Early test build: the apworld generates and the client runs the server, but chec
 - **Quick play** in the server menu: pick an episode and difficulty and go straight into a Solo game, without creating
   a team in the lobby. Only difficulties your character's level allows are listed. To play with others, go to the
   lobby as before.
+- **`$goto`** chat command: after a crash or logging off, warp from Pioneer 2 straight back to any floor you've
+  already reached (boss floors included) instead of walking the whole area again. `$goto` alone lists the reached
+  floors; `$goto c3` (or the floor number) warps. Reached floors are per episode and difficulty, and shared by everyone
+  playing on the same seed's server. Doesn't work in quests.
 
 ### Docs
 - Setup guide covering install, generating and hosting, and playing.

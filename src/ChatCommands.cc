@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "Archipelago.hh"
 #include "Client.hh"
 #include "GameServer.hh"
 #include "Lobby.hh"
@@ -1810,6 +1811,14 @@ ChatCommandDefinition cc_minlevel(
 
       l->min_level = new_min_level;
       send_text_message_fmt(l, "$C6Minimum level set\nto {}", l->min_level + 1);
+      co_return;
+    });
+
+ChatCommandDefinition cc_goto(
+    {"$goto"},
+    +[](const Args& a) -> asio::awaitable<void> {
+      a.check_is_proxy(false);
+      ap_goto(a.c, a.text);
       co_return;
     });
 
