@@ -31,6 +31,9 @@ constexpr uint32_t PROXY_OPTIONS = 0xAA0000AA;
 constexpr uint32_t TOURNAMENTS = 0xBB0000BB;
 constexpr uint32_t TOURNAMENTS_FOR_SPEC = 0xBB1111BB;
 constexpr uint32_t TOURNAMENT_ENTRIES = 0xCC0000CC;
+// Archipelago (ArchipelagoQuickPlay.cc)
+constexpr uint32_t AP_QUICK_PLAY_EPISODE = 0xDD0000DD;
+constexpr uint32_t AP_QUICK_PLAY_DIFFICULTY = 0xDD1111DD;
 } // namespace MenuID
 
 namespace MainMenuItemID {
@@ -42,6 +45,7 @@ constexpr uint32_t PATCH_SWITCHES = 0x11666611;
 constexpr uint32_t PROGRAMS = 0x11777711;
 constexpr uint32_t DISCONNECT = 0x11888811;
 constexpr uint32_t CLEAR_LICENSE = 0x11999911;
+constexpr uint32_t AP_QUICK_PLAY = 0x11AAAA11; // Archipelago (ArchipelagoQuickPlay.cc)
 } // namespace MainMenuItemID
 
 namespace ClearLicenseConfirmationMenuItemID {

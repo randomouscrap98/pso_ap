@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <resource_file/Emulators/Expression.hh>
 #include <stdexcept>
 
@@ -160,6 +161,9 @@ public:
   uint8_t lobby_client_id = 0;
   uint8_t lobby_arrow_color = 0;
   int64_t preferred_lobby_id = -1; // <0 = none chosen
+  // Archipelago quick play: set when chosen in the main menu; the game is created once the client has arrived in the
+  // lobby (ap_on_lobby_arrival, ArchipelagoQuickPlay.cc)
+  std::optional<std::pair<Episode, Difficulty>> ap_quick_play;
 
   asio::steady_timer save_game_data_timer;
   asio::steady_timer send_ping_timer;

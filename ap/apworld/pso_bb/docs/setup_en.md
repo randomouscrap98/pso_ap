@@ -47,6 +47,9 @@ You don't need to download the server separately: the client downloads the match
    launcher).
 5. Log in with any username and password: the account is created automatically. Each seed has its own saves, so every
    seed starts with fresh characters.
+6. Playing alone? Pick **Quick play** in the server menu (after choosing your character, or "Change Ship" at the lobby
+   counter), then an episode and a difficulty. You land straight in a Solo game, with no team to create. To play with
+   others, choose "Go to lobby" and create or join a team as usual.
 
 Keep the client open while you play: closing it stops the server.
 

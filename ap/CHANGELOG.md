@@ -43,6 +43,9 @@ Early test build: the apworld generates and the client runs the server, but chec
 ### Server
 - Builds for Windows and Linux, based on the latest upstream newserv.
 - Only reachable from your own computer unless you turn on `expose_server`.
+- **Quick play** in the server menu: pick an episode and difficulty and go straight into a Solo game, without creating
+  a team in the lobby. Only difficulties your character's level allows are listed. To play with others, go to the
+  lobby as before.
 
 ### Docs
 - Setup guide covering install, generating and hosting, and playing.

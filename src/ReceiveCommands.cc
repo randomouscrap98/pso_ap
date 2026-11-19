@@ -11,6 +11,7 @@
 #include <phosg/Strings.hh>
 #include <phosg/Time.hh>
 
+#include "Archipelago.hh"
 #include "ChatCommands.hh"
 #include "Compression.hh"
 #include "Episode3/Tournament.hh"
@@ -125,6 +126,8 @@ static void send_main_menu(std::shared_ptr<Client> c) {
             num_players, num_games, num_compatible_games);
       },
       0);
+  main_menu->items.emplace_back(MainMenuItemID::AP_QUICK_PLAY, "Quick play",
+      "Start a solo game\nright away", MenuItem::Flag::BB_ONLY); // Archipelago
   main_menu->items.emplace_back(MainMenuItemID::INFORMATION, "Information",
       "View server\ninformation", MenuItem::Flag::INVISIBLE_ON_DC_PROTOS | MenuItem::Flag::REQUIRES_MESSAGE_BOXES);
 
@@ -2557,6 +2560,10 @@ static asio::awaitable<void> on_10_main_menu(std::shared_ptr<Client> c, uint32_t
       break;
     }
 
+    case MainMenuItemID::AP_QUICK_PLAY:
+      send_menu(c, ap_quick_play_episode_menu());
+      break;
+
     case MainMenuItemID::INFORMATION: {
       send_menu(c, s->data->information_menu(c->version()));
       c->set_flag(Client::Flag::IN_INFORMATION_MENU);
@@ -3055,6 +3062,22 @@ static asio::awaitable<void> on_10(std::shared_ptr<Client> c, Channel::Message& 
       break;
     case MenuID::CLEAR_LICENSE_CONFIRMATION:
       on_10_clear_license_confirmation(c, base_cmd.item_id);
+      break;
+    // Archipelago quick play (ArchipelagoQuickPlay.cc)
+    case MenuID::AP_QUICK_PLAY_EPISODE:
+      if (base_cmd.item_id == AP_QUICK_PLAY_GO_BACK) {
+        send_main_menu(c);
+      } else {
+        send_menu(c, ap_quick_play_difficulty_menu(c, ap_quick_play_episode(base_cmd.item_id)));
+      }
+      break;
+    case MenuID::AP_QUICK_PLAY_DIFFICULTY:
+      if (base_cmd.item_id == AP_QUICK_PLAY_GO_BACK) {
+        send_menu(c, ap_quick_play_episode_menu());
+      } else {
+        c->ap_quick_play = ap_quick_play_choice(base_cmd.item_id);
+        co_await on_10_main_menu(c, MainMenuItemID::GO_TO_LOBBY);
+      }
       break;
     case MenuID::INFORMATION:
       on_10_information(c, base_cmd.item_id);
